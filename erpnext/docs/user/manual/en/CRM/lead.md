@@ -22,9 +22,9 @@ Leads are the  entities constituting a first contact. Leads can be created by a 
 
 To create a Lead, go to:
 
-> Selling > Lead > New Lead
+> CRM > Lead > New Lead
 
-<img class="screenshot" alt="Lead" src="{{docs_base_url}}/assets/img/crm/lead.png">
+<img class="screenshot gif" alt="Lead" src="{{docs_base_url}}/assets/img/crm/lead.gif">
 
 ERPNext gives you a lot of options you may want to store about your Leads. For
 example what is the source, how likely are they to give you business etc. If
@@ -47,11 +47,17 @@ button. Once the Customer is created, the Lead becomes “Converted” and any
 further Opportunities from the same source can be created against the
 Customer.
 
+To convert a Lead into a Customer, go to:
+
+> CRM > Lead > Select Lead > Make > Customer
+
+<img class="screenshot gif" alt="Lead to Customer" src="{{docs_base_url}}/assets/img/crm/lead-to-customer.gif">
+
 ---
 
 ### Creation via Portal
 
-If a someone creates an account through the website interface is Lead is automatically created, status is Open and the Owner is the webuser.
+If someone creates an account through the website interface a Lead is automatically created, status is Open and the Owner is the webuser.
 
 After registration the webform Addresses is called, where the web user can enter address information.The address is linked to the lead using the **Lead Name-Address Type** as ID.
 
