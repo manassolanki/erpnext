@@ -43,10 +43,51 @@ class Subscription(Document):
 
 
 
-def create_subscription_document():
+def create_subscription_document(next_recurrence_date=None, commit=False):
 	"""
 		Create subscription document depending on the next recurrence date by copying
 		the orginal data and notify the concerned people
 	"""
-	today_doc_list = frappe.get_list("Subscription" fields = [name, ])
+	print nowdate()
+	today_doc_list = frappe.get_list("Subscription", fields = ["name", "base_document_type", 
+		"base_document", "next_recurrence_date"], filters = {"docstatus": 1})
+	print today_doc_list
+	for d in today_doc_list:
+		# print d.next_recurrence_date == nowdate()
+		try:
+			base_doc = frappe.get_doc(d.base_document_type, d.base_document)
+			new_doc = make_new_doc(base_doc, d)
+			print doc, new_doc
+
+			if d.notify_by_emails:
+				send_notification(new_doc, d.email)
+			if commit:
+				frappe.db.commit()
+		except:
+			if commit:
+				frappe.db.rollback()
+
+def make_new_document(base_doc, subscription_doc):
+	"""
+		Making the new document based on the subscription next date and copying details
+		from the base document.
+	"""
+	new_document = frappe.copy_doc(base_doc, ignore_no_copy=False)
+	freq = month_map[subscription_doc.frequency]
+
+	pass
+
+def send_notifications(new_doc, email):
+	"""
+		Notify concerned person about the subscription document generation.
+	"""
+	print "in send notifications"
+	pass
+
+def set_next_date(doc, current_next_date):
+	"""
+		Changing the next date of subscription doctype after generating the document.
+	"""
+	print "in set next date"
+	pass
 
