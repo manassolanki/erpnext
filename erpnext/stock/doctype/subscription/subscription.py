@@ -41,6 +41,11 @@ class Subscription(Document):
 				new_list.append(self.owner)
 			self.email = ", ".join(new_list)
 
+	def submit(self):
+		if self.base_document and self.base_document_type:
+			frappe.db.set_value(self.base_document_type, self.base_document, subscription_document, self.name)
+
+
 
 
 def create_subscription_document(next_recurrence_date=None, commit=False):
