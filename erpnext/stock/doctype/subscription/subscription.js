@@ -2,21 +2,23 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Subscription', {
-	refresh: function(frm) {
+	before_save: function(frm) {
 		if(frm.doc.subscription_start_date && frm.doc.subscription_duration) {
-			frm.doc.expiry_date = moment(frm.doc.subscription_start_date)
-				.add(frm.doc.subscription_duration,'M');
+			frm.doc.expiry_date = frappe.datetime.add_months(frm.doc.subscription_start_date,
+				frm.doc.subscription_duration)
 		}
 		if(frm.doc.subscription_start_date && frm.doc.repeat_day) {
 			var now = moment();
-			var next_recc = moment(frm.doc.subscription_start_date)
-				.set('date', frm.doc.repeat_day);
+			var next_recc = moment(frm.doc.subscription_start_date);
+			tmp2 = next_recc.set('date', frm.doc.repeat_day);
 			if (next_recc < now) {
-				frm.doc.next_recurrence_date = moment(next_recc).add(1, 'M');
+				var tmp3 = next_recc.add(1, 'M');
+				frm.doc.next_recurrence_date = tmp3.format()	;
 			}
 			else {
-				frm.doc.next_recurrence_date = next_recc;
+				frm.doc.next_recurrence_date = next_recc.format();
 			}
 		}
 	}
+
 });

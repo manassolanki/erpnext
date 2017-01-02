@@ -33,7 +33,8 @@ class Subscription(Document):
 		if self.base_document:
 			new_list = []
 			new_doc = frappe.get_doc(self.base_document_type, self.base_document)
-			new_list.append(new_doc.contact_email)
+			if new_doc.contact_email:
+				new_list.append(new_doc.contact_email)
 			if self.owner == "Administrator":
 				doc = frappe.get_doc("User", "Administrator")
 				new_list.append(doc.email);
@@ -43,7 +44,7 @@ class Subscription(Document):
 
 	def submit(self):
 		if self.base_document and self.base_document_type:
-			frappe.db.set_value(self.base_document_type, self.base_document, subscription_document, self.name)
+			frappe.db.set_value(self.base_document_type, self.base_document, "subscription_document", self.name)
 
 
 
