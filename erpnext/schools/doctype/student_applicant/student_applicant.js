@@ -7,7 +7,6 @@ frappe.ui.form.on("Student Applicant", {
 			frm.add_custom_button(__("Approve"), function() {
 				frm.set_value("application_status", "Approved");
 				frm.save_or_update();
-
 			}, 'Actions');
 
 			frm.add_custom_button(__("Reject"), function() {

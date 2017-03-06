@@ -26,6 +26,7 @@ frappe.ui.form.on('Assessment Result Tool', {
 	},
 
 	render_table: function(frm, students) {
+		console.log(students);
 		$(frm.fields_dict.result_html.wrapper).empty();
 		var assessment_plan = frm.doc.assessment_plan;
 		var student_scores = {};
@@ -91,7 +92,7 @@ frappe.ui.form.on('Assessment Result Tool', {
 										return d.assessment_criteria === criteria;
 									}).grade;
 									$input.val(`${value} (${grade})`);
-									$input.attr('disabled', true);
+									// $input.attr('disabled', true);
 								});
 
 							}

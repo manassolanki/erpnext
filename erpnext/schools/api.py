@@ -23,6 +23,7 @@ def enroll_student(source_name):
 				"name": "student_applicant"
 			}
 		}}, ignore_permissions=True)
+	# print "=====", len(student.guardians)
 	student.save()
 	program_enrollment = frappe.new_doc("Program Enrollment")
 	program_enrollment.student = student.name
@@ -273,7 +274,7 @@ def mark_assessment_result(student, assessment_plan, scores):
 		"details": details
 	})
 	assessment_result.save()
-	assessment_result.submit()	
+	# assessment_result.submit()	
 	return assessment_result
 
 @frappe.whitelist()
