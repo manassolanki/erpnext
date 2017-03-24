@@ -2,6 +2,9 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Fee Request', {
+	refresh: function(frm) {
+		
+	},
 	fee_request_against: function(frm) {
 		if (frm.doc.fee_request_against == "Program") {
 			frm.set_value('student_batches', null)	
@@ -28,5 +31,11 @@ frappe.ui.form.on('Fee Request', {
 				}
 			});
 		}
+	}
+});
+
+frappe.ui.form.on("Fee Component", {
+	refresh: function(frm) {
+		frm.set_read_only();
 	}
 });

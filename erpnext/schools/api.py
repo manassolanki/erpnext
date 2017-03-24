@@ -106,23 +106,36 @@ def get_student_guardians(student):
 	return guardians
 
 @frappe.whitelist()
-def get_student_batch_students(student_batch):
+def get_student_batch_students(student_batch, academic_year=None):
 	"""Returns List of student, student_name, idx in Student Batch.
 
 	:param student_batch: Student Batch.
+	:param academic_year: Academic Year.
 	"""
 	students = frappe.get_list("Student Batch Student", fields=["student", "student_name", "idx"] , 
 		filters={"parent": student_batch, "active": 1}, order_by= "idx")
 	return students
 
 @frappe.whitelist()
-def get_student_group_students(student_group):
+def get_student_group_students(student_group, academic_year=None):
 	"""Returns List of student, student_name in Student Group.
 
 	:param student_group: Student Group.
+	:param academic_year: Academic Year.
 	"""
 	students = frappe.get_list("Student Group Student", fields=["student", "student_name"] , 
 		filters={"parent": student_group, "active": 1}, order_by= "idx")
+	return students
+
+@frappe.whitelist()
+def get_program_students(program, academic_year=None):
+	"""Returns List of student, student_name enrolled in Program.
+
+	:param program: Program.
+	:param academic_year: Academic Year.
+	"""
+	students = frappe.get_list("Program Enrollment", fields=["student", "student_name"] , 
+		filters={"program": program, "academic_year":academic_year})
 	return students
 
 @frappe.whitelist()
