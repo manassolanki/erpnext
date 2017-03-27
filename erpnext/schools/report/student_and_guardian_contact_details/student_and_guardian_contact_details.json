@@ -1,0 +1,27 @@
+{
+ "add_total_row": 0, 
+ "apply_user_permissions": 1, 
+ "creation": "2017-03-24 17:51:59.348028", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "modified": "2017-03-27 11:58:11.896191", 
+ "modified_by": "Administrator", 
+ "module": "Schools", 
+ "name": "Student and Guardian Contact Details", 
+ "owner": "Administrator", 
+ "query": "", 
+ "ref_doctype": "Program Enrollment", 
+ "report_name": "Student and Guardian Contact Details", 
+ "report_type": "Script Report", 
+ "roles": [
+  {
+   "role": "Instructor"
+  }, 
+  {
+   "role": "Academics User"
+  }
+ ]
+}
