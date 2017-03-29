@@ -29,6 +29,12 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "Student Group Creation Tool"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Student and Guardian Contact Details",
+					"doctype": "Program Enrollment"
 				}
 			]
 		},
