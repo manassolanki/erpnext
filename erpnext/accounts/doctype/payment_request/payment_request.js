@@ -13,6 +13,13 @@ frappe.ui.form.on("Payment Request", "onload", function(frm, dt, dn){
 			}
 		})
 	}
+	me.frm.set_query("party_type", "accounts", function() {
+		return{
+			query: "erpnext.setup.doctype.party_type.party_type.get_party_type"
+		}
+	});
+
+
 })
 
 frappe.ui.form.on("Payment Request", "refresh", function(frm) {

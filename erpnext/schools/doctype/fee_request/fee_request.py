@@ -14,9 +14,8 @@ class FeeRequest(Document):
 		if not(self.programs or self.student_batches or self.student_groups):
 			frappe.throw(_("Select atleast one {0}").format(self.fee_request_against))
 
-	def on_submit(self):
 		print "========>>>>>> generating payment request"
-		student_list, students = [[],[]]
+		student_list, students = [],[]
 		if self.fee_request_against == "Program":
 			for program in self.programs:
 				print "got program", program
@@ -32,6 +31,11 @@ class FeeRequest(Document):
 				print "got student group", student_group
 				students += get_student_group_students(student_group, self.academic_year)
 			print students
+	
+	def on_submit(self):
+		for student in students:
+			doc = frappe.new_doc("Payment Request")
+			
 
 
 @frappe.whitelist()
