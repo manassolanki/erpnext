@@ -39,7 +39,21 @@ frappe.ui.form.on("Student Group", {
 				}
 			};
 		});
-	}
+	},
+
+	get_students: function(frm) {
+		frm.set_value("students",[]);
+		frappe.call({
+			method: "get_students",
+			doc:frm.doc,
+			callback: function(r) {
+				if(r.message) {
+					frm.set_value("students", r.message);
+				}
+			}
+		})
+	},
+
 });
 
 //If Student Batch is entered, deduce program, academic_year and academic term from it

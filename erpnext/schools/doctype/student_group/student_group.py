@@ -10,6 +10,7 @@ from erpnext.schools.utils import validate_duplicate_student
 from erpnext.schools.api import get_student_batch_students
 
 class StudentGroup(Document):
+	'''
 	def autoname(self):
 		self.name = frappe.db.get_value("Course", self.course, "course_abbreviation")
 		if not self.name:
@@ -26,13 +27,16 @@ class StudentGroup(Document):
 				self.name += "-" + self.academic_year
 		if self.academic_term:
 			self.name += "-" + self.academic_term
+	'''
 	
 	def validate(self):
 		self.validate_strength()
 		self.validate_student_name()
 		self.validate_name()
+		'''
 		if self.student_batch:
 			self.validate_student_batch()
+		'''
 		validate_duplicate_student(self.students)
 
 	def validate_strength(self):
@@ -46,7 +50,7 @@ class StudentGroup(Document):
 	def validate_name(self):
 		if frappe.db.exists("Student Batch", self.name):
 			frappe.throw(_("""Student Batch exists with same name"""))
-
+	'''
 	def validate_student_batch(self):
 		student_batch_students = []
 		for d in get_student_batch_students(self.student_batch):
@@ -54,3 +58,34 @@ class StudentGroup(Document):
 		for d in self.students:
 			if d.student not in student_batch_students:
 				frappe.throw(_("""Student {0}: {1} does not belong to Student Batch {2}""".format(d.student, d.student_name, self.student_batch)))
+	'''
+
+	def get_students(self):
+		if self.group_based_on == "Batch" and not self.program and not self.batch:
+			frappe.throw(_("Program and Batch are mandatory field"))			
+		elif self.group_based_on == "Course" and not self.course:
+			frappe.throw(_("Mandatory field - Course"))
+		else:
+			if self.group_based_on == "Batch":
+				students = frappe.db.sql('''select student, student_name from `tabProgram Enrollment` where academic_year = %s
+					and program = %s and student_batch_name = %s''',(self.academic_year, self.program, self.batch), as_dict=1)
+			elif self.group_based_on == "Course":
+				pass
+				# '''
+				# students = frappe.db.sql("select student, student_name, student_batch_name from \
+				# 	`tabProgram Enrollment` where program = %s and academic_year = %s",(self.program, self.academic_year), as_dict=1)
+				# student_list = [d.student for d in students]
+
+				# inactive_students = frappe.db.sql('''
+				# 	select name as student, title as student_name from `tabStudent` where name in (%s) and enabled = 0''' %
+				# 	', '.join(['%s']*len(student_list)), tuple(student_list), as_dict=1)
+
+				# for student in students:
+				# 	if student.student in [d.student for d in inactive_students]:
+				# 		students.remove(student)
+				# '''
+
+		if students:
+			return students
+		else:
+			frappe.throw(_("No students Found"))
