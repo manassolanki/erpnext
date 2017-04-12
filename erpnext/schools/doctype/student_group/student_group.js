@@ -54,10 +54,12 @@ frappe.ui.form.on("Student Group", {
 
 	},
 
-	get_students: function(frm) {
-		frm.set_value("students",[]);
+	update_students: function(frm) {
+		if (frm.doc.students == null) {
+			frm.set_value("students",[]);
+		}
 		frappe.call({
-			method: "get_students",
+			method: "update_students",
 			doc:frm.doc,
 			callback: function(r) {
 				if(r.message) {
@@ -65,6 +67,6 @@ frappe.ui.form.on("Student Group", {
 				}
 			}
 		})
-	},
+	}
 
 });

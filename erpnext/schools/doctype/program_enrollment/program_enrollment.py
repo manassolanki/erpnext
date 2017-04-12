@@ -6,10 +6,12 @@ from __future__ import unicode_literals
 import frappe
 from frappe import msgprint, _
 from frappe.model.document import Document
+from frappe.desk.reportview import get_match_cond, get_filters_cond
 from frappe.utils import comma_and
 
 class ProgramEnrollment(Document):
 	def validate(self):
+		print "===============>>>>>>>>> Testing <<<<<<<<<============="
 		self.validate_duplication()
 		if not self.student_name:
 			self.student_name = frappe.db.get_value("Student", self.student, "title")
@@ -54,3 +56,25 @@ class ProgramEnrollment(Document):
 			fee_list = ["""<a href="#Form/Fees/%s" target="_blank">%s</a>""" % \
 				(fee, fee) for fee in fee_list]
 			msgprint(_("Fee Records Created - {0}").format(comma_and(fee_list)))
+
+	def get_courses(self):
+		return frappe.db.sql('''select course, course_name from `tabProgram Course` where parent = %s and required = 1''', (self.program), as_dict=1)
+
+
+@frappe.whitelist()
+def get_program_courses(doctype, txt, searchfield, start, page_len, filters):
+	if filters.get('program'):
+		return frappe.db.sql("""select course, course_name from `tabProgram Course`
+			where  parent = %(program)s and course like %(txt)s {match_cond}
+			order by
+				if(locate(%(_txt)s, course), locate(%(_txt)s, course), 99999),
+				idx desc,
+				`tabProgram Course`.course asc
+			limit {start}, {page_len}""".format(
+				match_cond=get_match_cond(doctype),
+				start=start,
+				page_len=page_len), {
+					"txt": "%{0}%".format(txt),
+					"_txt": txt.replace('%', ''),
+					"program": filters['program']
+				})

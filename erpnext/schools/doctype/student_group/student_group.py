@@ -73,10 +73,12 @@ class StudentGroup(Document):
 				frappe.throw(_("""Student {0}: {1} does not belong to Student Batch {2}""".format(d.student, d.student_name, self.student_batch)))
 	'''
 
-	def get_students(self):
-		students = self.get_program_enrollment()
-		if students:
-			return students
+	def update_students(self):
+		enrolled_students = self.get_program_enrollment()
+		print enrolled_students
+		group_student_list = [student.student for student in self.students]
+		if enrolled_students:
+			return [d for d in enrolled_students if frappe.db.get_value("Student", d.student, "enabled") and d.student not in group_student_list]
 		elif self.group_based_on != "Activity":
 			frappe.throw(_("No students are enrolled in the given {}".format(self.group_based_on)))
 		else:
@@ -84,24 +86,19 @@ class StudentGroup(Document):
 
 	def get_program_enrollment(self):
 		if self.group_based_on == "Batch":
-			program_enrollments = frappe.db.sql('''select student, student_name from `tabProgram Enrollment` where academic_year = %s
-				and program = %s and student_batch_name = %s''',(self.academic_year, self.program, self.batch), as_dict=1)
+			return frappe.db.sql('''select student, student_name from `tabProgram Enrollment` where academic_year = %s
+				and program = %s and student_batch_name = %s order by student_name asc''',(self.academic_year, self.program, self.batch), as_dict=1)
 
 		elif self.group_based_on == "Course":
-			return
-			# '''
-			# students = frappe.db.sql("select student, student_name, student_batch_name from \
-			# 	`tabProgram Enrollment` where program = %s and academic_year = %s",(self.program, self.academic_year), as_dict=1)
-			# student_list = [d.student for d in students]
-
-			# inactive_students = frappe.db.sql('''
-			# 	select name as student, title as student_name from `tabStudent` where name in (%s) and enabled = 0''' %
-			# 	', '.join(['%s']*len(student_list)), tuple(student_list), as_dict=1)
-
-			# for student in students:
-			# 	if student.student in [d.student for d in inactive_students]:
-			# 		students.remove(student)
-			# '''
+			return frappe.db.sql('''
+				select 
+					pe.student, pe.student_name 
+				from 
+					`tabProgram Enrollment` pe, `tabProgram Enrollment Course` pec
+				where
+					pe.name = pec.parent and pec.course = %s
+				order by
+					pe.student_name asc
+				''', (self.course), as_dict=1)
 		else:
 			return
-		return [d for d in program_enrollments if frappe.db.get_value("Student", d.student, "enabled")]
