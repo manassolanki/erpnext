@@ -1,0 +1,23 @@
+{
+ "add_total_row": 0, 
+ "apply_user_permissions": 1, 
+ "creation": "2017-04-23 18:58:11.363834", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "modified": "2017-04-23 19:08:18.699051", 
+ "modified_by": "Administrator", 
+ "module": "Schools", 
+ "name": "Assessment Plan Result", 
+ "owner": "Administrator", 
+ "ref_doctype": "Assessment Result", 
+ "report_name": "Assessment Plan Result", 
+ "report_type": "Script Report", 
+ "roles": [
+  {
+   "role": "Academics User"
+  }
+ ]
+}

@@ -199,7 +199,7 @@ def get_assessment_criteria(course):
 		fields=["assessment_criteria", "weightage"], filters={"parent": course}, order_by= "idx")
 
 @frappe.whitelist()
-def get_assessment_students(assessment_plan, student_group=None, student_batch=None):
+def get_assessment_students(assessment_plan, student_batch=None, student_group=None):
 	student_list = []
 	if student_group:
 		student_list = get_student_group_students(student_group)
