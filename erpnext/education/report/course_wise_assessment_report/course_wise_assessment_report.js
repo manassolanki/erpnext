@@ -21,21 +21,14 @@ frappe.query_reports["Course wise Assessment Report"] = {
 			"label": __("Course"),
 			"fieldtype": "Link",
 			"options": "Course",
-			"reqd": 1
+			"reqd": 0
 		},
 		{
 			"fieldname":"assessment_group",
 			"label": __("Assessment Group"),
 			"fieldtype": "Link",
 			"options": "Assessment Group",
-			"reqd": 1,
-			"get_query": function() {
-				return{
-					filters: {
-						'is_group': 1
-					}
-				};
-			}
+			"reqd": 1
 		},
 		{
 			"fieldname":"student_group",
