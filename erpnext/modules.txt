@@ -21,4 +21,8 @@ Restaurant
 Agriculture
 ERPNext Integrations
 Non Profit
+<<<<<<< HEAD
 Hotels
+=======
+Shopping Cart Coupon Code
+>>>>>>> [ADD]shopping_cart_coupon_code: feature of applying price rule on ecommerce using coupons.
