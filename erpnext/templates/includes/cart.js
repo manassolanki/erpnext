@@ -134,6 +134,7 @@ $.extend(shopping_cart, {
 	},
 
 	place_order: function(btn) {
+		debugger;
 		return frappe.call({
 			type: "POST",
 			method: "erpnext.shopping_cart.cart.place_order",

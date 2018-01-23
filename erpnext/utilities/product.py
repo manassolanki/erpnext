@@ -46,14 +46,18 @@ def get_price(item_code, price_list, customer_group, company, qty=1):
 				"for_shopping_cart": True
 			}))
 
+			price_obj = frappe._dict(price[0])
 			if pricing_rule:
 				if pricing_rule.pricing_rule_for == "Discount Percentage":
-					price[0].price_list_rate = flt(price[0].price_list_rate * (1.0 - (flt(pricing_rule.discount_percentage) / 100.0)))
+					price_obj.price_list_rate = flt(price[0].price_list_rate * (1.0 - (flt(pricing_rule.discount_percentage) / 100.0)))
 
 				if pricing_rule.pricing_rule_for == "Price":
-					price[0].price_list_rate = pricing_rule.price_list_rate
+					price_obj.price_list_rate = pricing_rule.price_list_rate
 
-			price_obj = price[0]
+				if price[0]["price_list_rate"] > price_obj.price_list_rate:
+					# price_obj.old_formatted_price = price[0]["price_list_rate"]
+					price_obj.old_formatted_price = fmt_money(price[0]["price_list_rate"], currency=price[0]["currency"])
+
 			if price_obj:
 				price_obj["formatted_price"] = fmt_money(price_obj["price_list_rate"], currency=price_obj["currency"])
 
@@ -70,4 +74,7 @@ def get_price(item_code, price_list, customer_group, company, qty=1):
 				if not price_obj["formatted_price"]:
 					price_obj["formatted_price"] = ""
 
+			print ("===============================")
+			# {u'price_list_rate': 900.0, u'currency': u'USD', u'formatted_price': u'$ 900.00', u'currency_symbol': u'$'}
+			print (price_obj)
 			return price_obj

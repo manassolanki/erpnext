@@ -30,10 +30,12 @@ def get_item_details(args):
 			"conversion_rate": 1.0,
 			"buying_price_list": None,
 			"is_subcontracted": "Yes" / "No",
-			"ignore_pricing_rule": 0/1
+			"ignore_pricing_rule": 0/1,
+			"coupon_code": "",
 			"project": ""
 		}
 	"""
+	print ("==================================")
 	args = process_args(args)
 	item_doc = frappe.get_doc("Item", args.item_code)
 	item = item_doc
@@ -518,7 +520,8 @@ def apply_price_list(args, as_doc=False):
 			"transaction_date": None,
 			"conversion_rate": 1.0,
 			"buying_price_list": None,
-			"ignore_pricing_rule": 0/1
+			"ignore_pricing_rule": 0/1,
+			"coupon_code": ""
 		}
 	"""
 	args = process_args(args)
@@ -534,6 +537,7 @@ def apply_price_list(args, as_doc=False):
 			args_copy = frappe._dict(args.copy())
 			args_copy.update(item)
 			item_details = apply_price_list_on_item(args_copy)
+			print ("item_details", item_details)
 			children.append(item_details)
 
 	if as_doc:

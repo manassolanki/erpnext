@@ -14,8 +14,8 @@ frappe.ready(function() {
 		callback: function(r) {
 			$(".item-cart").toggleClass("hide", (!!!r.message.price || !!!r.message.in_stock));
 			if(r.message && r.message.price) {
-				$(".item-price")
-					.html(r.message.price.formatted_price + " {{ _("per") }} " + r.message.uom);
+				$(".item-price").html(r.message.price.formatted_price + " <small class='text-muted'><strike>" + r.message.price.old_formatted_price + "</strike</small><br>");
+				$(".item-price").append(" {{ _("per") }} " + r.message.uom);
 
 				if(r.message.in_stock==0) {
 					$(".item-stock").html("<div style='color: red'> <i class='fa fa-close'></i> {{ _("Not in stock") }}</div>");

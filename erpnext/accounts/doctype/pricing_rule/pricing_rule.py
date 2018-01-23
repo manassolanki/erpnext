@@ -172,6 +172,7 @@ def get_pricing_rule_for_item(args):
 
 	pricing_rules = get_pricing_rules(args)
 	pricing_rule = filter_pricing_rules(args, pricing_rules)
+	print ("pricing_rule", pricing_rule)
 
 	if pricing_rule:
 		item_details.pricing_rule = pricing_rule.name
@@ -189,6 +190,7 @@ def get_pricing_rule_for_item(args):
 	elif args.get('pricing_rule'):
 		item_details = remove_pricing_rule_for_item(args.get("pricing_rule"), item_details)
 
+	print ("item_details", item_details)
 	return item_details
 
 def remove_pricing_rule_for_item(pricing_rule, item_details):
@@ -285,6 +287,17 @@ def get_pricing_rules(args):
 
 def filter_pricing_rules(args, pricing_rules):
 	# filter for qty
+	print (pricing_rules)
+	coupon_pricing_rule = None
+	if pricing_rules and args.coupon_code:
+		print (args.coupon_code)
+		coupon_pricing_rule = frappe.get_value("Coupon Code", args.coupon_code, "pricing_rule")
+		print (coupon_pricing_rule)
+		pricing_rules = [d for d in pricing_rules if d.coupon_code_based and d.name == coupon_pricing_rule]
+	elif pricing_rules:
+		pricing_rules = [d for d in pricing_rules if not d.coupon_code_based]
+
+	print (pricing_rules)
 	if pricing_rules:
 		stock_qty = flt(args.get('qty')) * args.get('conversion_factor', 1)
 
@@ -321,6 +334,9 @@ def filter_pricing_rules(args, pricing_rules):
 		if len(price_or_discount) == 1 and price_or_discount[0] == "Discount Percentage":
 			pricing_rules = filter(lambda x: x.for_price_list==args.price_list, pricing_rules) \
 				or pricing_rules
+
+	if args.coupon_code and (not pricing_rules or pricing_rules[0].name != coupon_pricing_rule):
+		frappe.msgprint("Wrong Coupon Code Applied")
 
 	if len(pricing_rules) > 1 and not args.for_shopping_cart:
 		frappe.throw(_("Multiple Price Rules exists with same criteria, please resolve conflict by assigning priority. Price Rules: {0}")
