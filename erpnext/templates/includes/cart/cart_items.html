@@ -21,7 +21,16 @@
                         +</button>
                 </span>
 			</div>
-		</span>    	
+		</span>
+
+
+		<div class="input-group input-group-sm pull-right footer-subscribe">
+			<input class="form-control" type="text" id="footer-subscribe-email" placeholder="Enter Coupon Code">
+			<span class="input-group-btn">
+				<button class="btn btn-default" type="button" id="footer-subscribe-button">Apply</button>
+			</span>
+		</div>
+
 	</div>
     <div class="col-sm-2 col-xs-3 text-right col-amount">
         {{ d.get_formatted("amount") }}
