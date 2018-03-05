@@ -7,9 +7,10 @@ import frappe
 from frappe.model.document import Document
 
 class Coupon(Document):
-	def validate(self):
+	def autoname(self):
 		if not self.coupon_code:
 			self.coupon_code = filter(lambda x: x.isalnum(), self.coupon_name).upper()[0:7]
+		self.name = self.coupon_code
 
 
 @frappe.whitelist()
