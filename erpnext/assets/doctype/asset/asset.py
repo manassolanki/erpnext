@@ -26,6 +26,7 @@ class Asset(Document):
 
 	def on_submit(self):
 		self.set_status()
+		self.validate_pi()
 
 	def on_cancel(self):
 		self.validate_cancellation()
@@ -43,6 +44,14 @@ class Asset(Document):
 			frappe.throw(_("Item {0} must be a Fixed Asset Item").format(self.item_code))
 		elif item.is_stock_item:
 			frappe.throw(_("Item {0} must be a non-stock item").format(self.item_code))
+
+	def validate_pi(self):
+		if self.purchase_invoice:
+			pi_item_info = frappe.get_all("Purchase Invoice Item", fields=["item_code", "asset"],
+				filters={"parent": self.purchase_invoice, "item_code": self.item_code})
+			if not pi_item_info or pi_item_info[0].asset != self.name:
+				self.purchase_invoice = ''
+				frappe.msgprint(_("Please link the asset in the Purchase Invoice Item table."))
 
 	def set_missing_values(self):
 		if self.item_code:
