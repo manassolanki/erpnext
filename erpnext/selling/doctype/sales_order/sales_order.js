@@ -75,6 +75,10 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 		var allow_purchase = false;
 		var allow_delivery = false;
 
+		this.frm.add_custom_button(__("Add Multiple Item"), function(){
+			me.custom_add_multiple_items();
+		})
+
 		if(doc.docstatus==1) {
 			if(doc.status != 'Closed') {
 
@@ -447,6 +451,205 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 		if(cint(frappe.boot.notification_settings.sales_order)) {
 			this.frm.email_doc(frappe.boot.notification_settings.sales_order_message);
 		}
+	},
+
+	custom_add_multiple_items: function() {
+
+		// frappe.custom_mutli_add_dialog(this.frm).show();
+		let multi_item_dialog = frappe.custom_mutli_add_dialog(this.frm);
+		multi_item_dialog.show();
+		multi_item_dialog.$wrapper.find('.modal-dialog').css("width", "800px");
+
 	}
 });
 $.extend(cur_frm.cscript, new erpnext.selling.SalesOrderController({frm: cur_frm}));
+
+
+frappe.provide("frappe")
+frappe.custom_mutli_add_dialog = function(frm) {
+	var dialog;
+
+	let fields = [
+			{
+				"label": __("Item Name"),
+				"fieldname": "item_code",
+				"fieldtype": "Link",
+				"options": "Item",
+				"onchange": function() {
+				},
+				"reqd": 1
+			},
+			{
+				"fieldname": "column_break",
+				"fieldtype": "Column Break"
+			},
+			{
+				"label": __("Quantity (SQM)"),
+				"fieldname": "quantity",
+				"fieldtype": "Float",
+				"reqd": 1
+			},
+			{
+				"fieldname": "section_break",
+				"fieldtype": "Section Break"
+			},
+			{
+				"label": __("Items Beginning with"),
+				"fieldname": "item_search",
+				"fieldtype": "Data"
+			},
+			{
+				"label": __("Search"),
+				"fieldname": "item_search_button",
+				"fieldtype": "Button"
+			},
+			{
+				"label": __("Item Detials"),
+				"fieldname": "item_html",
+				"fieldtype": "HTML"
+			}
+
+		]
+	dialog = new frappe.ui.Dialog({
+		title: __("Select Mutliple Items"),
+		fields: fields,
+		primary_action: function(values) {
+			console.log("final values-------------------->>");
+			console.log(values);
+			custom_add_item(frm, values.item_code, values.quantity);
+		},
+		primary_action_label: __("Add"),
+		width: 800
+	})
+
+	dialog.fields_dict.item_search_button.input.onclick = function(frm) {
+		console.log("clicked")
+		get_item_details();
+	}
+
+	function get_item_details() {
+
+		let txt = dialog.get_field("item_search").get_value();
+		let item_code = dialog.get_field("item_code").get_value();
+		if (txt) {
+			frappe.call({
+				method: "erpnext.stock.custom_stock_scripts.get_item_details",
+				args: {
+					args: {
+						txt: txt,
+						item_code: item_code,
+						customer: cur_frm.doc.customer,
+						update_stock: cur_frm.doc.update_stock,
+						company: cur_frm.doc.company,
+						order_type: cur_frm.doc.order_type,
+						transaction_date: cur_frm.doc.transaction_date,
+						doctype: cur_frm.doc.doctype,
+						name: cur_frm.doc.name
+					}
+				},
+				callback: function(r) {
+					console.log(r);
+
+					let item_details = r.message;
+					frappe.item_details = r.message;
+
+					item_details = r.message;
+					item_details = r.message;
+					item_html_df = dialog.get_field("item_html");
+					$(item_html_df.wrapper).empty();
+					let stock_table = '';
+
+					if (r.message) {
+						stock_table += custom_warehouse_template1;
+						for (let item in item_details) {
+							stock_table += `
+							<tr>
+								<td>${item}</td>
+								<td>${item_details[item]["item_details"]}</td>
+								<td>${item_details[item]["item_stock_totals"]["actual_qty"]}</td>
+								<td>${item_details[item]["item_stock_totals"]["reserved_qty"]}</td>
+							</tr>
+							`;
+						}
+						stock_table += custom_warehouse_template2;
+					} else {
+						stock_table += `<div>No Item stock details found.</div>`
+					}
+					var warehouse_table = $(frappe.render_template(stock_table));
+					warehouse_table.appendTo(item_html_df.wrapper);
+				}
+			});
+		}
+
+	}
+
+	function create_html_table(frm) {
+
+	}
+
+
+	function custom_add_item(frm, item_code, item_qty) {
+		// add row or update qty
+		var added = false;
+
+		// find row with item if exists
+		$.each(frm.doc.items || [], (i, d) => {
+			if(d["item_code"]===item_code) {
+				frappe.model.set_value(d.doctype, d.name, 'qty', d.qty + item_qty);
+				frappe.show_alert({message: __("Added Item  {0} {1}", [item_code, item_qty]), indicator: 'green'});
+				added = true;
+				return false;
+			}
+		});
+
+		if(!added) {
+			var d = null;
+
+			var item_row = frappe.model.add_child(frm.doc, "Sales Order Item", "items");
+			item_row.item_code = item_code;
+			item_row.qty = item_qty;
+			frm.refresh_field("items");
+			frappe.model.set_value(item_row.doctype, item_row.name, "item_code", item_row.item_code);
+			frm.script_manager.trigger("item_code", item_row.doctype, item_row.name);
+			frappe.show_alert({message: __("Added Item - {0} with quantity - {1}", [item_code, item_qty]), indicator: 'green'});
+
+
+			// frappe.run_serially([
+			// 	() => {
+			// 		var d = frappe.model.add_child(frm.doc, "Sales Order Item", "items");
+			// 		d.item_code = item_code;
+			// 		d.qty = item_qty;
+			// 	},
+			// 	() => frm.refresh_field("items"),
+			// 	() => frappe.model.set_value(d.doctype, d.name, "item_code", item_code),
+			// 	() => frappe.timeout(0.1),
+			// 	() => {
+			// 		frappe.model.set_value(d.doctype, d.name, 'qty', 1);
+			// 		frappe.show_alert({message: __("Added Item - {0} with quantity - {1}", [values.item_code, values.quantity]), indicator: 'green'});
+			// 	}
+			// ]);
+		}
+	}
+
+	return dialog;
+
+}
+
+
+const custom_warehouse_template1 = `
+<table class="table table-bordered assessment-result-tool">
+	<thead>
+		<tr>
+			<th>Item Name</th>
+			<th>Details</th>
+			<th>Available Qty</th>
+			<th>Reserved Qty</th>
+		</tr>
+	</thead>
+	<tbody>
+`;
+
+const custom_warehouse_template2 = `
+	</tbody>
+</table>
+`;
