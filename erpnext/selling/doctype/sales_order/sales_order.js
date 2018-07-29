@@ -297,6 +297,15 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 	make_delivery_note_based_on_delivery_date: function() {
 		var me = this;
 
+		if (this.frm.doc.advance_paid < this.frm.doc.grand_total) {
+			frappe.msgprint({
+				title: __('Payment Not Done'),
+				message: __('Not allowed to create the Delivery Note before Payment'),
+				indicator: 'orange'
+			});
+			return;
+		}
+
 		var delivery_dates = [];
 		$.each(this.frm.doc.items || [], function(i, d) {
 			if(!delivery_dates.includes(d.delivery_date)) {
@@ -458,7 +467,7 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 		// frappe.custom_mutli_add_dialog(this.frm).show();
 		let multi_item_dialog = frappe.custom_mutli_add_dialog(this.frm);
 		multi_item_dialog.show();
-		multi_item_dialog.$wrapper.find('.modal-dialog').css("width", "800px");
+		multi_item_dialog.$wrapper.find('.modal-dialog').css("width", "900px");
 
 	}
 });
@@ -478,6 +487,7 @@ frappe.custom_mutli_add_dialog = function(frm) {
 				"onchange": function() {
 				},
 				"reqd": 1
+				// "read_only": 1
 			},
 			{
 				"fieldname": "column_break",
@@ -524,13 +534,16 @@ frappe.custom_mutli_add_dialog = function(frm) {
 
 	dialog.fields_dict.item_search_button.input.onclick = function(frm) {
 		console.log("clicked")
-		get_item_details();
+		get_item_details(via_search=true);
 	}
 
-	function get_item_details() {
-
+	function get_item_details(via_search) {
+		// backend call to find the item details
 		let txt = dialog.get_field("item_search").get_value();
-		let item_code = dialog.get_field("item_code").get_value();
+		let item_code = '';
+		if (via_search) {
+			item_code = dialog.get_field("item_code").get_value();
+		}
 		if (txt) {
 			frappe.call({
 				method: "erpnext.stock.custom_stock_scripts.get_item_details",
@@ -551,10 +564,8 @@ frappe.custom_mutli_add_dialog = function(frm) {
 					console.log(r);
 
 					let item_details = r.message;
-					frappe.item_details = r.message;
+					frappe.custom_item_details = r.message;
 
-					item_details = r.message;
-					item_details = r.message;
 					item_html_df = dialog.get_field("item_html");
 					$(item_html_df.wrapper).empty();
 					let stock_table = '';
@@ -562,12 +573,22 @@ frappe.custom_mutli_add_dialog = function(frm) {
 					if (r.message) {
 						stock_table += custom_warehouse_template1;
 						for (let item in item_details) {
+							let actual_qty_sqm = item_details[item]["item_stock_totals"]["actual_qty"];
+							let actual_qty_box = Math.floor( actual_qty_sqm / item_details[item]["uom_box"] );
+							let actual_qty_pieces = Math.round(actual_qty_sqm / (item_details[item]["uom_box"] / item_details[item]["uom_pieces"])) % item_details[item]["uom_pieces"];
+							let reserved_qty_sqm = item_details[item]["item_stock_totals"]["reserved_qty"];
+							let reserved_qty_box = Math.floor( reserved_qty_sqm / item_details[item]["uom_box"] );
+							let reserved_qty_pieces = Math.round(reserved_qty_sqm / (item_details[item]["uom_box"] / item_details[item]["uom_pieces"])) % item_details[item]["uom_pieces"];
 							stock_table += `
 							<tr>
 								<td>${item}</td>
 								<td>${item_details[item]["item_details"]}</td>
-								<td>${item_details[item]["item_stock_totals"]["actual_qty"]}</td>
-								<td>${item_details[item]["item_stock_totals"]["reserved_qty"]}</td>
+								<td>${actual_qty_sqm}</td>
+								<td>${actual_qty_box || 0}</td>
+								<td>${actual_qty_pieces || 0}</td>
+								<td>${reserved_qty_sqm}</td>
+								<td>${reserved_qty_box || 0}</td>
+								<td>${reserved_qty_pieces || 0}</td>
 							</tr>
 							`;
 						}
@@ -608,26 +629,24 @@ frappe.custom_mutli_add_dialog = function(frm) {
 			var item_row = frappe.model.add_child(frm.doc, "Sales Order Item", "items");
 			item_row.item_code = item_code;
 			item_row.qty = item_qty;
+			if (frappe.custom_item_details[item_code]) {
+				item_row.def_boxes = frappe.custom_item_details[item_code]["uom_box"];
+				item_row.def_pieces = frappe.custom_item_details[item_code]["uom_pieces"];
+			}
+
 			frm.refresh_field("items");
-			frappe.model.set_value(item_row.doctype, item_row.name, "item_code", item_row.item_code);
-			frm.script_manager.trigger("item_code", item_row.doctype, item_row.name);
-			frappe.show_alert({message: __("Added Item - {0} with quantity - {1}", [item_code, item_qty]), indicator: 'green'});
 
-
-			// frappe.run_serially([
-			// 	() => {
-			// 		var d = frappe.model.add_child(frm.doc, "Sales Order Item", "items");
-			// 		d.item_code = item_code;
-			// 		d.qty = item_qty;
-			// 	},
-			// 	() => frm.refresh_field("items"),
-			// 	() => frappe.model.set_value(d.doctype, d.name, "item_code", item_code),
-			// 	() => frappe.timeout(0.1),
-			// 	() => {
-			// 		frappe.model.set_value(d.doctype, d.name, 'qty', 1);
-			// 		frappe.show_alert({message: __("Added Item - {0} with quantity - {1}", [values.item_code, values.quantity]), indicator: 'green'});
-			// 	}
-			// ]);
+			frappe.run_serially([
+				() => frappe.model.set_value(item_row.doctype, item_row.name, "item_code", item_row.item_code),
+				() => frm.script_manager.trigger("item_code", item_row.doctype, item_row.name),
+				() => frappe.model.set_value(item_row.doctype, item_row.name, 'qty', item_qty),
+				() => frm.script_manager.trigger("qty", item_row.doctype, item_row.name),
+				() => frappe.timeout(0.1),
+				() => {
+					frm.refresh_field("items");
+					frappe.show_alert({message: __("Added Item - {0} with quantity - {1}", [item_code, item_qty]), indicator: 'green'});
+				}
+			]);
 		}
 	}
 
@@ -640,10 +659,18 @@ const custom_warehouse_template1 = `
 <table class="table table-bordered assessment-result-tool">
 	<thead>
 		<tr>
-			<th>Item Name</th>
-			<th>Details</th>
-			<th>Available Qty</th>
-			<th>Reserved Qty</th>
+			<th style="width: 130px" rowspan="2">Item Name</th>
+			<th style="width: 240px" rowspan="2">Details</th>
+			<th style="width: 220px" colspan="3">Available Qty</th>
+			<th style="width: 220px" colspan="3">Reserved Qty</th>
+		</tr>
+		<tr>
+			<th>SQM</th>
+			<th>Boxes</th>
+			<th>Pieces</th>
+			<th>SQM</th>
+			<th>Boxes</th>
+			<th>Pieces</th>
 		</tr>
 	</thead>
 	<tbody>
