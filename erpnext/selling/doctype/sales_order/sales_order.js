@@ -297,7 +297,7 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 	make_delivery_note_based_on_delivery_date: function() {
 		var me = this;
 
-		if (this.frm.doc.advance_paid < this.frm.doc.grand_total) {
+		if (this.frm.doc.advance_paid < this.frm.doc.grand_total && !in_list(frappe.user_roles, "Delivery Note Approver")) {
 			frappe.msgprint({
 				title: __('Payment Not Done'),
 				message: __('Not allowed to create the Delivery Note before Payment'),

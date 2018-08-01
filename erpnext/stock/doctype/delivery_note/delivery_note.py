@@ -121,6 +121,19 @@ class DeliveryNote(SellingController):
 
 		if not self.installation_status: self.installation_status = 'Not Installed'
 
+		self.custom_validate_payment()
+
+	def custom_validate_payment(self):
+		sales_order_list = []
+		for item in self.items:
+			sales_order_list.append(item.against_sales_order)
+		sales_order_list = list(set(sales_order_list))
+		if sales_order_list:
+			order_detials = frappe.db.get_value("Sales Order", sales_order_list[0], ["advance_paid", "grand_total"], as_dict=1)
+			if order_detials.advance_paid < order_detials.grand_total and "Delivery Note Approver" not in frappe.get_roles():
+				frappe.throw(_("Not allowed to deliver the items because payment isn't done yet."))
+
+
 	def validate_with_previous_doc(self):
 		super(DeliveryNote, self).validate_with_previous_doc({
 			"Sales Order": {
