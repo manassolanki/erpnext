@@ -467,7 +467,7 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 		// frappe.custom_mutli_add_dialog(this.frm).show();
 		let multi_item_dialog = frappe.custom_mutli_add_dialog(this.frm);
 		multi_item_dialog.show();
-		multi_item_dialog.$wrapper.find('.modal-dialog').css("width", "900px");
+		multi_item_dialog.$wrapper.find('.modal-dialog').css("width", "960px");
 
 	}
 });
@@ -480,14 +480,28 @@ frappe.custom_mutli_add_dialog = function(frm) {
 
 	let fields = [
 			{
+				"label": __("Items Beginning with"),
+				"fieldname": "item_search",
+				"fieldtype": "Data"
+			},
+			{
+				"label": __("Search"),
+				"fieldname": "item_search_button",
+				"fieldtype": "Button"
+			},
+			{
+				"fieldname": "section_break",
+				"fieldtype": "Section Break"
+			},
+			{
 				"label": __("Item Name"),
 				"fieldname": "item_code",
 				"fieldtype": "Link",
 				"options": "Item",
 				"onchange": function() {
 				},
-				"reqd": 1
-				// "read_only": 1
+				"reqd": 1,
+				"read_only": 1
 			},
 			{
 				"fieldname": "column_break",
@@ -504,21 +518,10 @@ frappe.custom_mutli_add_dialog = function(frm) {
 				"fieldtype": "Section Break"
 			},
 			{
-				"label": __("Items Beginning with"),
-				"fieldname": "item_search",
-				"fieldtype": "Data"
-			},
-			{
-				"label": __("Search"),
-				"fieldname": "item_search_button",
-				"fieldtype": "Button"
-			},
-			{
 				"label": __("Item Detials"),
 				"fieldname": "item_html",
 				"fieldtype": "HTML"
 			}
-
 		]
 	dialog = new frappe.ui.Dialog({
 		title: __("Select Mutliple Items"),
@@ -541,7 +544,7 @@ frappe.custom_mutli_add_dialog = function(frm) {
 		// backend call to find the item details
 		let txt = dialog.get_field("item_search").get_value();
 		let item_code = '';
-		if (via_search) {
+		if (!via_search) {
 			item_code = dialog.get_field("item_code").get_value();
 		}
 		if (txt) {
@@ -561,7 +564,6 @@ frappe.custom_mutli_add_dialog = function(frm) {
 					}
 				},
 				callback: function(r) {
-					console.log(r);
 
 					let item_details = r.message;
 					frappe.custom_item_details = r.message;
@@ -580,7 +582,7 @@ frappe.custom_mutli_add_dialog = function(frm) {
 							let reserved_qty_box = Math.floor( reserved_qty_sqm / item_details[item]["uom_box"] );
 							let reserved_qty_pieces = Math.round(reserved_qty_sqm / (item_details[item]["uom_box"] / item_details[item]["uom_pieces"])) % item_details[item]["uom_pieces"];
 							stock_table += `
-							<tr>
+							<tr data-item=${item} class="custom-item-row">
 								<td>${item}</td>
 								<td>${item_details[item]["item_details"]}</td>
 								<td>${actual_qty_sqm}</td>
@@ -589,6 +591,7 @@ frappe.custom_mutli_add_dialog = function(frm) {
 								<td>${reserved_qty_sqm}</td>
 								<td>${reserved_qty_box || 0}</td>
 								<td>${reserved_qty_pieces || 0}</td>
+								<td><b>${actual_qty_sqm-reserved_qty_sqm}</b></td>
 							</tr>
 							`;
 						}
@@ -598,6 +601,18 @@ frappe.custom_mutli_add_dialog = function(frm) {
 					}
 					var warehouse_table = $(frappe.render_template(stock_table));
 					warehouse_table.appendTo(item_html_df.wrapper);
+
+					$(".custom-item-row").click( function() {
+						let old_item_code = dialog.get_value("item_code");
+						let old_quantity = dialog.get_value("quantity");
+						let new_quantity = 1;
+						let itme_clicked = $(this).attr("data-item");
+						dialog.set_value("item_code", itme_clicked);
+						if (old_item_code===itme_clicked) {
+							new_quantity = old_quantity + 1;
+						}
+						dialog.set_value("quantity", new_quantity);
+					})
 				}
 			});
 		}
@@ -656,13 +671,14 @@ frappe.custom_mutli_add_dialog = function(frm) {
 
 
 const custom_warehouse_template1 = `
-<table class="table table-bordered assessment-result-tool">
+<table class="table table-bordered table-hover table-condensed custom-item-selection-tool">
 	<thead>
 		<tr>
-			<th style="width: 130px" rowspan="2">Item Name</th>
+			<th style="width: 120px" rowspan="2">Item Name</th>
 			<th style="width: 240px" rowspan="2">Details</th>
-			<th style="width: 220px" colspan="3">Available Qty</th>
+			<th style="width: 220px" colspan="3">Present Qty</th>
 			<th style="width: 220px" colspan="3">Reserved Qty</th>
+			<th style="width: 90px" >Avail. Qty</th>
 		</tr>
 		<tr>
 			<th>SQM</th>
@@ -671,6 +687,7 @@ const custom_warehouse_template1 = `
 			<th>SQM</th>
 			<th>Boxes</th>
 			<th>Pieces</th>
+			<th>SQM</th>
 		</tr>
 	</thead>
 	<tbody>
