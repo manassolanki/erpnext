@@ -75,10 +75,21 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 		var allow_purchase = false;
 		var allow_delivery = false;
 
-		this.frm.add_custom_button(__("Add Multiple Item"), function(){
-			me.custom_add_multiple_items();
-		})
-
+		if (this.frm.doc.docstatus == 0) {
+			var item_childtable = $("div[data-fieldname='items']")[1];
+			var grid_buttons = $(item_childtable).find(".grid-buttons");
+			if (!$(grid_buttons).hasClass("custom-add-multiple-rows")) {
+				$(grid_buttons).append(`
+					<button type="reset" class="custom-add-multiple-rows btn btn-xs btn-default"
+							style="margin-right: 4px;">
+						Add Items
+					</button>
+				`)
+			}
+			$(grid_buttons).find(".custom-add-multiple-rows").click(function() {
+				me.custom_add_multiple_items();
+			})
+		}
 		if(doc.docstatus==1) {
 			if(doc.status != 'Closed') {
 
@@ -539,6 +550,10 @@ frappe.custom_mutli_add_dialog = function(frm) {
 		console.log("clicked")
 		get_item_details(via_search=true);
 	}
+
+	frappe.ui.keys.on("ctrl+f", function() {
+		dialog.fields_dict.item_search_button.input.click();
+	})
 
 	function get_item_details(via_search) {
 		// backend call to find the item details

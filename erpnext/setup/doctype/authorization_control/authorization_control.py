@@ -6,9 +6,10 @@ import frappe
 from frappe.utils import cstr, flt, has_common, comma_or
 from frappe import session, _
 from erpnext.utilities.transaction_base import TransactionBase
+from frappe.utils.background_jobs import enqueue
 
 class AuthorizationControl(TransactionBase):
-	def get_appr_user_role(self, det, doctype_name, total, based_on, condition, item, company):
+	def get_appr_user_role(self, det, doctype_name, total, based_on, condition, item, company, doc_obj):
 		amt_list, appr_users, appr_roles = [], [], []
 		users, roles = '',''
 		if det:
@@ -33,10 +34,11 @@ class AuthorizationControl(TransactionBase):
 				if(d[1]): appr_roles.append(d[1])
 
 			if not has_common(appr_roles, frappe.get_roles()) and not has_common(appr_users, [session['user']]):
+				enqueue(set_custom_field, queue='default', timeout=6000, event='set_custom_field', docname=doc_obj.name)
 				frappe.msgprint(_("Not authroized since {0} exceeds limits").format(_(based_on)))
 				frappe.throw(_("Can be approved by {0}").format(comma_or(appr_roles + appr_users)))
 
-	def validate_auth_rule(self, doctype_name, total, based_on, cond, company, item = ''):
+	def validate_auth_rule(self, doctype_name, total, based_on, cond, company, item = '', doc_obj=None):
 		chk = 1
 		add_cond1,add_cond2	= '',''
 		if based_on in  ['Itemwise Discount', "Item Group wise Discount"]:
@@ -53,7 +55,7 @@ class AuthorizationControl(TransactionBase):
 					('%s', '%s', '%s', cond, add_cond1), (doctype_name, total, based_on))
 
 			if itemwise_exists:
-				self.get_appr_user_role(itemwise_exists, doctype_name, total, based_on, cond+add_cond1, item,company)
+				self.get_appr_user_role(itemwise_exists, doctype_name, total, based_on, cond+add_cond1, item,company, doc_obj)
 				chk = 0
 		if chk == 1:
 			if based_on in ['Itemwise Discount', "Item Group wise Discount"]:
@@ -70,7 +72,7 @@ class AuthorizationControl(TransactionBase):
 					and ifnull(company,'') = '' and docstatus != 2 %s %s""" %
 					('%s', '%s', '%s', cond, add_cond2), (doctype_name, total, based_on))
 
-			self.get_appr_user_role(appr, doctype_name, total, based_on, cond+add_cond2, item, company)
+			self.get_appr_user_role(appr, doctype_name, total, based_on, cond+add_cond2, item, company, doc_obj)
 
 	def bifurcate_based_on_type(self, doctype_name, total, av_dis, based_on, doc_obj, val, company):
 		add_cond = ''
@@ -89,14 +91,14 @@ class AuthorizationControl(TransactionBase):
 		if based_on == 'Itemwise Discount':
 			if doc_obj:
 				for t in doc_obj.get("items"):
-					self.validate_auth_rule(doctype_name, t.discount_percentage, based_on, add_cond, company,t.item_code)
+					self.validate_auth_rule(doctype_name, t.discount_percentage, based_on, add_cond, company,t.item_code, doc_obj)
 		elif based_on == "Item Group wise Discount":
 			if doc_obj:
 				for t in doc_obj.get("items"):
 					if t.item_group:
-						self.validate_auth_rule(doctype_name, t.discount_percentage, based_on, add_cond, company, t.item_group)
+						self.validate_auth_rule(doctype_name, t.discount_percentage, based_on, add_cond, company, t.item_group, doc_obj)
 		else:
-			self.validate_auth_rule(doctype_name, auth_value, based_on, add_cond, company)
+			self.validate_auth_rule(doctype_name, auth_value, based_on, add_cond, company, doc_obj)
 
 	def validate_approving_authority(self, doctype_name,company, total, doc_obj = ''):
 		if not frappe.db.count("Authorization Rule"):
@@ -230,3 +232,7 @@ class AuthorizationControl(TransactionBase):
 				return app_specific_user
 			else:
 				return app_user
+
+
+def set_custom_field(docname):
+	frappe.db.set_value("Sales Order", docname, "needs_approval", 1)
