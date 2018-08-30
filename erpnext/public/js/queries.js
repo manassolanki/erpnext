@@ -153,7 +153,6 @@ erpnext.queries.setup_warehouse_query = function(frm){
 		if(row.item_code){
 			$.extend(filters, {"query":"erpnext.controllers.queries.warehouse_query"});
 			filters["filters"].push(["Bin", "item_code", "=", row.item_code]);
-			filters["filters"].push(["Warehouse", "rejected_warehouse", "!=", 1]);
 		}
 		return filters
 	});

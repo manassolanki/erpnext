@@ -78,7 +78,7 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 		if (this.frm.doc.docstatus == 0) {
 			var item_childtable = $("div[data-fieldname='items']")[1];
 			var grid_buttons = $(item_childtable).find(".grid-buttons");
-			if (!$(grid_buttons).hasClass("custom-add-multiple-rows")) {
+			if (!$(grid_buttons).find(".custom-add-multiple-rows").length) {
 				$(grid_buttons).append(`
 					<button type="reset" class="custom-add-multiple-rows btn btn-xs btn-default"
 							style="margin-right: 4px;">

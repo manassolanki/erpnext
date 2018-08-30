@@ -71,8 +71,8 @@ def get_item_details(args):
 	# 	out[item]["item_stock_totals"] = {"actual_qty": 0, "reserved_qty": 0}
 
 
-
-	warehouses = frappe.db.get_all("Warehouse", fields=["name"], filters={"company": args.company})
+	# filters["filters"].push(["Warehouse", "rejected_warehouse", "!=", 1]);
+	warehouses = frappe.db.get_all("Warehouse", fields=["name"], filters=[["company", "=", args.company], ["rejected_warehouse", "!=", 1]])
 	warehouses_list = [warehouse.name for warehouse in warehouses]
 
 	item_details = frappe.db.get_all("Bin", fields=["item_code", "warehouse", "actual_qty", "projected_qty", "reserved_qty"],
