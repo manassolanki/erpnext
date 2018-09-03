@@ -129,8 +129,8 @@ class DeliveryNote(SellingController):
 			sales_order_list.append(item.against_sales_order)
 		sales_order_list = list(set(sales_order_list))
 		if sales_order_list:
-			order_details = frappe.db.get_value("Sales Order", sales_order_list[0], ["advance_paid", "grand_total"], as_dict=1)
-			if order_details and order_details.advance_paid < order_details.grand_total and "Delivery Note Approver" not in frappe.get_roles():
+			order_details = frappe.db.get_value("Sales Order", sales_order_list[0], ["advance_paid", "grand_total", "allow_delivery"], as_dict=1)
+			if order_details and not order_details.allow_delivery and (order_details.advance_paid < self.grand_total):
 				frappe.throw(_("Not allowed to deliver the items because payment isn't done yet."))
 
 

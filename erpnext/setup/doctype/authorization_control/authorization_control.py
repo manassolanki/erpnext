@@ -34,7 +34,7 @@ class AuthorizationControl(TransactionBase):
 				if(d[1]): appr_roles.append(d[1])
 
 			if not has_common(appr_roles, frappe.get_roles()) and not has_common(appr_users, [session['user']]):
-				enqueue(set_custom_field, queue='default', timeout=6000, event='set_custom_field', docname=doc_obj.name)
+				enqueue(set_custom_field, queue='default', timeout=6000, event='set_custom_field', docname=doc_obj.name, appr_roles=appr_roles)
 				frappe.msgprint(_("Not authroized since {0} exceeds limits").format(_(based_on)))
 				frappe.throw(_("Can be approved by {0}").format(comma_or(appr_roles + appr_users)))
 
@@ -234,5 +234,6 @@ class AuthorizationControl(TransactionBase):
 				return app_user
 
 
-def set_custom_field(docname):
+def set_custom_field(docname, appr_roles):
 	frappe.db.set_value("Sales Order", docname, "needs_approval", 1)
+	frappe.db.set_value("Sales Order", docname, "approval_by", appr_roles)
