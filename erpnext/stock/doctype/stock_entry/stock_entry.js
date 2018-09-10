@@ -82,6 +82,7 @@ frappe.ui.form.on('Stock Entry', {
 				`)
 			}
 			$(grid_buttons).find(".custom-add-multiple-rows").click(function() {
+				console.log("event triggered");
 				frm.events.custom_add_multiple_items(frm);
 			});
 		}

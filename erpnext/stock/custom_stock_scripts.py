@@ -62,6 +62,7 @@ def get_item_details(args):
 		out[item.name]["item_stock_totals"] = {"actual_qty": 0, "reserved_qty": 0}
 		out[item.name]["uom_box"] = item.boxes
 		out[item.name]["uom_pieces"] = item.pieces
+		out[item.name]["warehouse_details"] = {}
 
 
 	# print (item_list)
@@ -79,8 +80,14 @@ def get_item_details(args):
 						filters=[["item_code", "in", item_list], ["warehouse", "in", warehouses_list]])
 
 
+	print ("================")
+	print (item_details)
 	for item in item_details:
-		out[item.item_code][item.warehouse] = item
+		out[item.item_code]["warehouse_details"][item.warehouse] = item
+		out[item.item_code]["warehouse_details"][item.warehouse]["uom_box"] = out[item.item_code]["uom_box"]
+		out[item.item_code]["warehouse_details"][item.warehouse]["uom_pieces"] = out[item.item_code]["uom_pieces"]
+
+		# print (item.warehouse)
 
 		# out[item.item_code]["item_details"] = item_dict[item.item_code]
 		# if "item_stock_totals" not in out[item.item_code]:
@@ -94,6 +101,8 @@ def get_item_details(args):
 	# 		or {"projected_qty": 0, "actual_qty": 0}
 
 	# out.update({warehouse: item_details})
+	print (out)
+	# frappe.throw("wait dude")
 
 	return out
 

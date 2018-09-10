@@ -28,7 +28,50 @@ frappe.ui.form.on('Material Request', {
 				filters: {'company': doc.company}
 			}
 		}
+	},
+
+	refresh: function(frm) {
+		if (frm.doc.docstatus == 1) {
+			frm.add_custom_button(__("Create Stock Entry"), function(frm) {
+				console.log(frm);
+				cur_frm.events.custom_make_stock_entry(cur_frm);
+
+			});
+		}
+	},
+
+	custom_make_stock_entry: function(frm) {
+		let dialog = new frappe.ui.Dialog({
+			title: __("Select Warehouse"),
+			fields: [
+				{"fieldtype": "Link", "label": __("Warehouse"), "fieldname": "warehouse", "options":"Warehouse", "reqd":1}
+			]
+		});
+
+		dialog.set_primary_action(__("Make Stock Entry"), () => {
+			var args = dialog.get_values();
+			if(!args) return;
+			dialog.hide();
+			return frappe.call({
+				type: "GET",
+				method: "erpnext.stock.doctype.material_request.material_request.custom_make_stock_entry",
+				args: {
+					"source_name": frm.doc.name,
+					"warehouse": args.warehouse
+				},
+				freeze: true,
+				callback: function(r) {
+					if(!r.exc) {
+						frappe.model.sync(r.message);
+						frappe.set_route("Form", r.message.doctype, r.message.name);
+					}
+				}
+			})
+		})
+
+		dialog.show();
 	}
+
 });
 
 frappe.ui.form.on("Material Request Item", {
