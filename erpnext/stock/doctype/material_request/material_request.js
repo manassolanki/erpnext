@@ -28,6 +28,12 @@ frappe.ui.form.on('Material Request', {
 				filters: {'company': doc.company}
 			}
 		}
+		frm.fields_dict["items"].grid.get_field("custom_warehouse_name").get_query = function(doc, cdt, cdn){
+			return{
+				filters: {'company': doc.company}
+			}
+		}
+
 	},
 
 	refresh: function(frm) {
@@ -41,18 +47,18 @@ frappe.ui.form.on('Material Request', {
 	},
 
 	custom_make_stock_entry: function(frm) {
-		let dialog = new frappe.ui.Dialog({
-			title: __("Select Warehouse"),
-			fields: [
-				{"fieldtype": "Link", "label": __("Warehouse"), "fieldname": "warehouse", "options":"Warehouse", "reqd":1}
-			]
-		});
+// 		let dialog = new frappe.ui.Dialog({
+// 			title: __("Select Warehouse"),
+// 			fields: [
+// 				{"fieldtype": "Link", "label": __("Warehouse"), "fieldname": "warehouse", "options":"Warehouse", "reqd":1}
+// 			]
+// 		});
 
-		dialog.set_primary_action(__("Make Stock Entry"), () => {
-			var args = dialog.get_values();
-			if(!args) return;
-			dialog.hide();
-			return frappe.call({
+// 		dialog.set_primary_action(__("Make Stock Entry"), () => {
+// 			var args = dialog.get_values();
+// 			if(!args) return;
+// 			dialog.hide();
+			frappe.call({
 				type: "GET",
 				method: "erpnext.stock.doctype.material_request.material_request.custom_make_stock_entry",
 				args: {
@@ -61,15 +67,16 @@ frappe.ui.form.on('Material Request', {
 				},
 				freeze: true,
 				callback: function(r) {
-					if(!r.exc) {
-						frappe.model.sync(r.message);
-						frappe.set_route("Form", r.message.doctype, r.message.name);
-					}
+					console.log(r);
+// 					if(!r.exc) {
+// 						frappe.model.sync(r.message);
+// 						frappe.set_route("Form", r.message.doctype, r.message.name);
+// 					}
 				}
 			})
-		})
+// 		})
 
-		dialog.show();
+// 		dialog.show();
 	}
 
 });
