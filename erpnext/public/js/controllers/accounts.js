@@ -7,24 +7,24 @@ frappe.provide("erpnext.taxes.flags");
 
 frappe.ui.form.on(cur_frm.doctype, {
 
-	refresh: function(frm) {
-		if (frm.doc.docstatus == 0 && in_list(["Quotation", "Sales Order", "Sales Invoice", "Delivery Note", "Purchase Order", "Stock Entry", "Material Request"], frm.doctype)) {
-			var item_childtable = $("div[data-fieldname='items']")[1];
-			var grid_buttons = $(item_childtable).find(".grid-buttons");
-			if (!$(grid_buttons).find(".custom-add-multiple-rows").length) {
-				$(grid_buttons).append(`
-					<button type="reset" class="custom-add-multiple-rows btn btn-xs btn-default"
-							style="margin-right: 4px;">
-						Add Items
-					</button>
-				`)
-			}
-			$(grid_buttons).find(".custom-add-multiple-rows").click(function() {
-				console.log("clicked on the custom add button");
-				frm.events.custom_add_multiple_items(frm);
-			});
-		}
-	},
+// 	refresh: function(frm) {
+// 		if (frm.doc.docstatus == 0 && in_list(["Quotation", "Sales Order", "Sales Invoice", "Delivery Note", "Purchase Order", "Stock Entry", "Material Request"], frm.doctype)) {
+// 			var item_childtable = $("div[data-fieldname='items']")[1];
+// 			var grid_buttons = $(item_childtable).find(".grid-buttons");
+// 			if (!$(grid_buttons).find(".custom-add-multiple-rows").length) {
+// 				$(grid_buttons).append(`
+// 					<button type="reset" class="custom-add-multiple-rows btn btn-xs btn-default"
+// 							style="margin-right: 4px;">
+// 						Add Items
+// 					</button>
+// 				`)
+// 			}
+// 			$(grid_buttons).find(".custom-add-multiple-rows").click(function() {
+// 				console.log("clicked on the custom add button");
+// 				frm.events.custom_add_multiple_items(frm);
+// 			});
+// 		}
+// 	},
 
 	custom_add_multiple_items: function(frm) {
 		// frappe.custom_mutli_add_dialog(this.frm).show();
@@ -41,6 +41,23 @@ frappe.ui.form.on(cur_frm.doctype, {
 				erpnext.taxes.set_conditional_mandatory_rate_or_amount(grid_row);
 			}
 		});
+		
+		if (frm.doc.docstatus == 0 && in_list(["Quotation", "Sales Order", "Sales Invoice", "Delivery Note", "Purchase Order", "Stock Entry", "Material Request"], frm.doctype)) {
+			var item_childtable = $("div[data-fieldname='items']")[1];
+			var grid_buttons = $(item_childtable).find(".grid-buttons");
+			if (!$(grid_buttons).find(".custom-add-multiple-rows").length) {
+				$(grid_buttons).append(`
+					<button type="reset" class="custom-add-multiple-rows btn btn-xs btn-default"
+							style="margin-right: 4px;">
+						Add Items
+					</button>
+				`)
+			}
+			$(grid_buttons).find(".custom-add-multiple-rows").click(function() {
+				console.log("clicked on the custom add button");
+				frm.events.custom_add_multiple_items(frm);
+			});
+		}
 	},
 	onload: function(frm) {
 		if(frm.get_field("taxes")) {
