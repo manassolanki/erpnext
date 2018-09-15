@@ -7,33 +7,6 @@ frappe.provide("erpnext.taxes.flags");
 
 frappe.ui.form.on(cur_frm.doctype, {
 
-// 	refresh: function(frm) {
-// 		if (frm.doc.docstatus == 0 && in_list(["Quotation", "Sales Order", "Sales Invoice", "Delivery Note", "Purchase Order", "Stock Entry", "Material Request"], frm.doctype)) {
-// 			var item_childtable = $("div[data-fieldname='items']")[1];
-// 			var grid_buttons = $(item_childtable).find(".grid-buttons");
-// 			if (!$(grid_buttons).find(".custom-add-multiple-rows").length) {
-// 				$(grid_buttons).append(`
-// 					<button type="reset" class="custom-add-multiple-rows btn btn-xs btn-default"
-// 							style="margin-right: 4px;">
-// 						Add Items
-// 					</button>
-// 				`)
-// 			}
-// 			$(grid_buttons).find(".custom-add-multiple-rows").click(function() {
-// 				console.log("clicked on the custom add button");
-// 				frm.events.custom_add_multiple_items(frm);
-// 			});
-// 		}
-// 	},
-
-	custom_add_multiple_items: function(frm) {
-		// frappe.custom_mutli_add_dialog(this.frm).show();
-		let multi_item_dialog = frappe.custom_mutli_add_dialog(frm);
-		multi_item_dialog.show();
-		multi_item_dialog.$wrapper.find('.modal-dialog').css("width", "960px");
-
-	},
-
 	setup: function(frm) {
 		// set conditional display for rate column in taxes
 		$(frm.wrapper).on('grid-row-render', function(e, grid_row) {
@@ -41,23 +14,6 @@ frappe.ui.form.on(cur_frm.doctype, {
 				erpnext.taxes.set_conditional_mandatory_rate_or_amount(grid_row);
 			}
 		});
-		
-		if (frm.doc.docstatus == 0 && in_list(["Quotation", "Sales Order", "Sales Invoice", "Delivery Note", "Purchase Order", "Stock Entry", "Material Request"], frm.doctype)) {
-			var item_childtable = $("div[data-fieldname='items']")[1];
-			var grid_buttons = $(item_childtable).find(".grid-buttons");
-			if (!$(grid_buttons).find(".custom-add-multiple-rows").length) {
-				$(grid_buttons).append(`
-					<button type="reset" class="custom-add-multiple-rows btn btn-xs btn-default"
-							style="margin-right: 4px;">
-						Add Items
-					</button>
-				`)
-			}
-			$(grid_buttons).find(".custom-add-multiple-rows").click(function() {
-				console.log("clicked on the custom add button");
-				frm.events.custom_add_multiple_items(frm);
-			});
-		}
 	},
 	onload: function(frm) {
 		if(frm.get_field("taxes")) {
@@ -86,7 +42,31 @@ frappe.ui.form.on(cur_frm.doctype, {
 				}
 			});
 		}
+		if (frm.doc.docstatus == 0 && in_list(["Quotation", "Sales Order", "Sales Invoice", "Delivery Note", "Purchase Order", "Stock Entry", "Material Request"], frm.doctype)) {
+			var item_childtable = $("div[data-fieldname='items']")[1];
+			var grid_buttons = $(item_childtable).find(".grid-buttons");
+			if (!$(grid_buttons).find(".custom-add-multiple-rows").length) {
+				$(grid_buttons).append(`
+					<button type="reset" class="custom-add-multiple-rows btn btn-xs btn-default"
+							style="margin-right: 4px;">
+						Add Items
+					</button>
+				`)
+			}
+			$(grid_buttons).find(".custom-add-multiple-rows").click(function() {
+				console.log("clicked on the custom add button");
+				frm.events.custom_add_multiple_items(frm);
+			});
+		}
 	},
+
+	custom_add_multiple_items: function(frm) {
+		// frappe.custom_mutli_add_dialog(this.frm).show();
+		let multi_item_dialog = frappe.custom_mutli_add_dialog(frm);
+		multi_item_dialog.show();
+		multi_item_dialog.$wrapper.find('.modal-dialog').css("width", "960px");
+	},
+
 	validate: function(frm) {
 		// neither is absolutely mandatory
 		if(frm.get_docfield("taxes")) {
@@ -416,7 +396,7 @@ frappe.custom_mutli_add_dialog = function(frm) {
 		</thead>
 		<tbody>
 	`;
-	
+
 	const custom_warehouse_template2 = `
 		</tbody>
 	</table>
@@ -443,8 +423,8 @@ frappe.custom_mutli_add_dialog = function(frm) {
 			</thead>
 			<tbody>
 		`;
-	
-	
+
+
 	let fields = [
 			{
 				"label": __("Items Beginning with"),
@@ -497,6 +477,7 @@ frappe.custom_mutli_add_dialog = function(frm) {
 		fields: fields,
 		primary_action: function(values) {
 			custom_add_item(frm, values.item_code, values.quantity);
+			dialog.fields_dict.item_search_button.input.click();
 		},
 		primary_action_label: __("Add"),
 		width: 800
@@ -570,7 +551,7 @@ frappe.custom_mutli_add_dialog = function(frm) {
 						<td><b>${actual_qty_sqm-reserved_qty_sqm}</b></td>
 					</tr>`;
 			}
-			
+
 			customItemDetailsTemplate += custom_warehouse_template2;
 		} else {
 			customItemDetailsTemplate += `<div>No Item stock details found.</div>`

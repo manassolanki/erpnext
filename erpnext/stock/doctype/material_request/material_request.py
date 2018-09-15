@@ -433,8 +433,11 @@ def raise_production_orders(material_request):
 
 
 @frappe.whitelist()
-def custom_make_stock_entry(source_name, warehouse, target_doc=None):
-	
+def custom_make_stock_entry(source_name):
+	mr_doc = frappe.get_doc("Material Request", source_name)
+	warehouse_list = list(set([item.custom_warehouse_name for item in mr_doc.items if item.custom_warehouse_name]))
+	doc_list = []
+
 	def update_item(obj, target, source_parent):
 		qty = flt(flt(obj.stock_qty) - flt(obj.ordered_qty))/ target.conversion_factor \
 			if flt(obj.stock_qty) > flt(obj.ordered_qty) else 0
@@ -444,42 +447,44 @@ def custom_make_stock_entry(source_name, warehouse, target_doc=None):
 
 		if source_parent.material_request_type == "Material Transfer":
 			target.t_warehouse = obj.warehouse
+			target.s_warehouse = obj.custom_warehouse_name
 		else:
 			target.s_warehouse = obj.warehouse
 
 	def set_missing_values(source, target):
 		target.purpose = source.material_request_type
 		target.run_method("calculate_rate_and_amount")
-	
-	def create_se_stock(warehouse_name):
-		doclist = get_mapped_doc("Material Request", source_name, {
-			"Material Request": {
-				"doctype": "Stock Entry",
-				"validation": {
-					"docstatus": ["=", 1],
-					"material_request_type": ["in", ["Material Transfer", "Material Issue"]]
-				}
-			},
-			"Material Request Item": {
-				"doctype": "Stock Entry Detail",
-				"field_map": {
-					"name": "material_request_item",
-					"parent": "material_request",
-					"uom": "stock_uom",
+
+
+	try:
+		for warehouse in warehouse_list:
+			target_doc = None
+			doc = get_mapped_doc("Material Request", source_name, {
+				"Material Request": {
+					"doctype": "Stock Entry",
+					"validation": {
+						"docstatus": ["=", 1],
+						"material_request_type": ["in", ["Material Transfer", "Material Issue"]]
+					}
 				},
-				"postprocess": update_item,
-				"condition": lambda doc: (doc.ordered_qty < doc.stock_qty) and (doc.custom_warehouse_name == warehouse_name)
-			}
-		}, target_doc, set_missing_values)
-		doclist.purpose = "Material Issue"
-		doclist.save()
-		
-	mr_doc = frappe.get_doc("Material Request", source)
-	warehouse_list = list(set([item.custom_warehouse_name for item in mr_doc.items if item.custom_warehouse_name]))
-	doc_list = []
-	for w in warehouse_list:
-		doc = create_se_stock(source, w)
-		doc_list.append(doc)
-	
-	frappe.msgprint(_("Stock Entries created"))
-# 	return doclist
+				"Material Request Item": {
+					"doctype": "Stock Entry Detail",
+					"field_map": {
+						"name": "material_request_item",
+						"parent": "material_request",
+						"uom": "stock_uom",
+					},
+					"postprocess": update_item,
+					"condition": lambda doc: (doc.ordered_qty < doc.stock_qty) and (doc.custom_warehouse_name == warehouse)
+				}
+			}, target_doc, set_missing_values)
+			doc.save()
+			doc_list.append(doc.name)
+	except Exception as e:
+		frappe.throw(_(e))
+		frappe.db.rollback()
+	else:
+		frappe.db.commit()
+
+	frappe.msgprint(_("Stock Entries ({0}) created".format(", ".join(doc_list))))
+	return doc_list
