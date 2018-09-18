@@ -478,6 +478,8 @@ def make_project(source_name, target_doc=None):
 @frappe.whitelist()
 def make_delivery_note(source_name, target_doc=None):
 	def set_missing_values(source, target):
+		if (not source.allow_delivery and source.advance_paid < source.grand_total):
+			frappe.throw(_('Not allowed to create the Delivery Note before Payment'))
 		target.ignore_pricing_rule = 1
 		target.run_method("set_missing_values")
 		target.run_method("set_po_nos")

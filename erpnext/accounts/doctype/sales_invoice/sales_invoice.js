@@ -400,17 +400,6 @@ cur_frm.cscript.update_stock = function(doc, dt, dn) {
 
 cur_frm.cscript['Make Delivery Note'] = function() {
 
-	if (!cur_frm.doc.allow_delivery) {
-		if (cur_frm.doc.grand_total > (cur_frm.doc.paid_amount+cur_frm.doc.total_advance) && !in_list(frappe.user_roles, "Delivery Note Approver")) {
-			frappe.msgprint({
-				title: __('Payment Not Done'),
-				message: __('Not allowed to create the Delivery Note before Payment'),
-				indicator: 'orange'
-			});
-			return;
-		}
-	}
-
 	frappe.model.open_mapped_doc({
 		method: "erpnext.accounts.doctype.sales_invoice.sales_invoice.make_delivery_note",
 		frm: cur_frm
