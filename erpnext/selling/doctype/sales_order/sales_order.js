@@ -284,16 +284,6 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 	},
 
 	make_material_request: function() {
-		if (!this.frm.doc.allow_delivery) {
-			if (this.frm.doc.advance_paid < this.frm.doc.grand_total && !in_list(frappe.user_roles, "Delivery Note Approver")) {
-				frappe.msgprint({
-					title: __('Payment Not Done'),
-					message: __('Not allowed to create the Material Request before Payment'),
-					indicator: 'orange'
-				});
-				return;
-			}
-		}
 		frappe.model.open_mapped_doc({
 			method: "erpnext.selling.doctype.sales_order.sales_order.make_material_request",
 			frm: this.frm
