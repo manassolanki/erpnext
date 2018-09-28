@@ -542,13 +542,13 @@ frappe.custom_mutli_add_dialog = function(frm) {
 					<tr data-item=${item} class="custom-item-row">
 						<td>${item}</td>
 						<td>${item_details[item]["item_details"]}</td>
-						<td>${actual_qty_sqm}</td>
-						<td>${actual_qty_box || 0}</td>
-						<td>${actual_qty_pieces || 0}</td>
-						<td>${reserved_qty_sqm}</td>
-						<td>${reserved_qty_box || 0}</td>
-						<td>${reserved_qty_pieces || 0}</td>
-						<td><b>${actual_qty_sqm-reserved_qty_sqm}</b></td>
+						<td>${flt(actual_qty_sqm, 3)}</td>
+						<td>${flt(actual_qty_box, 3) || 0}</td>
+						<td>${flt(actual_qty_pieces, 3) || 0}</td>
+						<td>${flt(reserved_qty_sqm, 3)}</td>
+						<td>${flt(reserved_qty_box, 3) || 0}</td>
+						<td>${flt(reserved_qty_pieces, 3) || 0}</td>
+						<td><b>${flt(actual_qty_sqm-reserved_qty_sqm, 3)}</b></td>
 					</tr>`;
 			}
 
@@ -568,24 +568,27 @@ frappe.custom_mutli_add_dialog = function(frm) {
 			customWarehouseDetailsTemplate += custom_warehousewise_template1;
 			for (let warehouse in warehouse_dict) {
 				let actual_qty_sqm = warehouse_dict[warehouse]["actual_qty"];
-				let actual_qty_box = Math.floor( actual_qty_sqm / warehouse_dict[warehouse]["uom_box"] );
-				let actual_qty_pieces = Math.round(actual_qty_sqm / (warehouse_dict[warehouse]["uom_box"] / warehouse_dict[warehouse]["uom_pieces"])) % warehouse_dict[warehouse]["uom_pieces"];
 				let reserved_qty_sqm = warehouse_dict[warehouse]["reserved_qty"];
-				let reserved_qty_box = Math.floor( reserved_qty_sqm / warehouse_dict[warehouse]["uom_box"] );
-				let reserved_qty_pieces = Math.round(reserved_qty_sqm / (warehouse_dict[warehouse]["uom_box"] / warehouse_dict[warehouse]["uom_pieces"])) % warehouse_dict[warehouse]["uom_pieces"];
-				customWarehouseDetailsTemplate += `
-				<tr data-item=${warehouse} class="custom-item-row">
-					<td>${warehouse}</td>
-					<td>${actual_qty_sqm}</td>
-					<td>${actual_qty_box || 0}</td>
-					<td>${actual_qty_pieces || 0}</td>
-					<td>${reserved_qty_sqm}</td>
-					<td>${reserved_qty_box || 0}</td>
-					<td>${reserved_qty_pieces || 0}</td>
-					<td><b>${actual_qty_sqm-reserved_qty_sqm}</b></td>
-				</tr>
-				`;
-				// console.log(warehouse);
+
+				if (actual_qty_sqm != 0 && reserved_qty_sqm !=0) {
+					let actual_qty_box = Math.floor( actual_qty_sqm / warehouse_dict[warehouse]["uom_box"] );
+					let actual_qty_pieces = Math.round(actual_qty_sqm / (warehouse_dict[warehouse]["uom_box"] / warehouse_dict[warehouse]["uom_pieces"])) % warehouse_dict[warehouse]["uom_pieces"];
+					let reserved_qty_box = Math.floor( reserved_qty_sqm / warehouse_dict[warehouse]["uom_box"] );
+					let reserved_qty_pieces = Math.round(reserved_qty_sqm / (warehouse_dict[warehouse]["uom_box"] / warehouse_dict[warehouse]["uom_pieces"])) % warehouse_dict[warehouse]["uom_pieces"];
+					customWarehouseDetailsTemplate += `
+					<tr data-item=${warehouse} class="custom-item-row">
+						<td>${warehouse}</td>
+						<td>${flt(actual_qty_sqm, 3)}</td>
+						<td>${flt(actual_qty_box, 3) || 0}</td>
+						<td>${flt(actual_qty_pieces, 3) || 0}</td>
+						<td>${flt(reserved_qty_sqm, 3)}</td>
+						<td>${flt(reserved_qty_box, 3) || 0}</td>
+						<td>${flt(reserved_qty_pieces, 3) || 0}</td>
+						<td><b>${flt(actual_qty_sqm-reserved_qty_sqm, 3)}</b></td>
+					</tr>
+					`;
+					// console.log(warehouse);
+				}
 			}
 			customWarehouseDetailsTemplate += custom_warehouse_template2;
 		} else {
