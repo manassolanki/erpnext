@@ -33,6 +33,14 @@ frappe.ui.form.on("Sales Order", {
 		});
 
 		erpnext.queries.setup_warehouse_query(frm);
+
+		for (let item of cur_frm.doc.items) {
+			if (item.needs_approval === 1 && item.custom_approver_role && in_list(frappe.user_roles, item.custom_approver_role)) {
+				var item_childtable = $(`div[data-name='${item.name}']`);
+				$(item_childtable).css('background-color', 'yellow');
+			}
+		}
+
 	},
 
 	delivery_date: function(frm) {

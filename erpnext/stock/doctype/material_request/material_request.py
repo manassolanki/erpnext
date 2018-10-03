@@ -437,7 +437,7 @@ def custom_make_stock_entry(source_name):
 	mr_doc = frappe.get_doc("Material Request", source_name)
 	warehouse_list = list(set([item.custom_warehouse_name for item in mr_doc.items if item.custom_warehouse_name]))
 	doc_list = []
-
+	
 	def update_item(obj, target, source_parent):
 		qty = flt(flt(obj.stock_qty) - flt(obj.ordered_qty))/ target.conversion_factor \
 			if flt(obj.stock_qty) > flt(obj.ordered_qty) else 0
@@ -451,13 +451,13 @@ def custom_make_stock_entry(source_name):
 		else:
 			target.s_warehouse = obj.warehouse
 
-	def set_missing_values(source, target):
-		target.purpose = source.material_request_type
-		target.run_method("calculate_rate_and_amount")
-
-
 	try:
 		for warehouse in warehouse_list:
+			def set_missing_values(source, target):
+				target.purpose = source.material_request_type
+				target.from_warehouse = warehouse
+				target.run_method("calculate_rate_and_amount")
+
 			target_doc = None
 			doc = get_mapped_doc("Material Request", source_name, {
 				"Material Request": {

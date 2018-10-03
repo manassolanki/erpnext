@@ -4,8 +4,10 @@ from __future__ import unicode_literals
 import json
 import frappe
 from frappe.defaults import get_user_default_as_list
-from erpnext.controllers.queries import item_query
+from frappe.desk.reportview import get_match_cond, get_filters_cond
+
 from collections import defaultdict
+from frappe.utils import nowdate
 
 @frappe.whitelist()
 def get_item_details(args):
@@ -48,7 +50,7 @@ def get_item_details(args):
 	else:
 		# search the given items from the seach fields
 		# doctype, txt, searchfield, start, page_len, filters, as_dict=False
-		items = item_query("Item", args.txt, "name", 0, 10, {"is_sales_item": 1}, True)
+		items = custom_item_query("Item", args.txt, "name", 0, 10, {"is_sales_item": 1}, True)
 		item_dict =	{d.name: ", ".join(d.values()) for d in items}
 		item_list = item_dict.keys()
 
@@ -64,8 +66,6 @@ def get_item_details(args):
 		out[item.name]["uom_pieces"] = item.pieces
 		out[item.name]["warehouse_details"] = {}
 
-
-	# print (item_list)
 	# for item in item_list:
 	# 	out[item] = {}
 	# 	out[item]["item_details"] = item_dict[item]
@@ -80,14 +80,10 @@ def get_item_details(args):
 						filters=[["item_code", "in", item_list], ["warehouse", "in", warehouses_list]])
 
 
-	print ("================")
-	print (item_details)
 	for item in item_details:
 		out[item.item_code]["warehouse_details"][item.warehouse] = item
 		out[item.item_code]["warehouse_details"][item.warehouse]["uom_box"] = out[item.item_code]["uom_box"]
 		out[item.item_code]["warehouse_details"][item.warehouse]["uom_pieces"] = out[item.item_code]["uom_pieces"]
-
-		# print (item.warehouse)
 
 		# out[item.item_code]["item_details"] = item_dict[item.item_code]
 		# if "item_stock_totals" not in out[item.item_code]:
@@ -101,11 +97,52 @@ def get_item_details(args):
 	# 		or {"projected_qty": 0, "actual_qty": 0}
 
 	# out.update({warehouse: item_details})
-	print (out)
-	# frappe.throw("wait dude")
 
 	return out
 
+
+
+
+def custom_item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=False):
+	conditions = []
+
+	description_cond = ''
+	if frappe.db.count('Item', cache=True) < 50000:
+		# scan description only if items are less than 50000
+		description_cond = 'or tabItem.description LIKE %(txt)s'
+
+	return frappe.db.sql("""select tabItem.name,
+		tabItem.item_name as item_name,
+		tabItem.item_group,
+		tabItem.description as decription
+		from tabItem
+		where tabItem.docstatus < 2
+			and tabItem.has_variants=0
+			and tabItem.disabled=0
+			and (tabItem.end_of_life > %(today)s or ifnull(tabItem.end_of_life, '0000-00-00')='0000-00-00')
+			and (tabItem.`{key}` LIKE %(txt)s
+				or tabItem.item_group LIKE %(txt)s
+				or tabItem.item_name LIKE %(txt)s
+				or tabItem.barcode LIKE %(txt)s
+				{description_cond})
+			{fcond} {mcond}
+		order by
+			if(locate(%(_txt)s, name), locate(%(_txt)s, name), 99999),
+			if(locate(%(_txt)s, item_name), locate(%(_txt)s, item_name), 99999),
+			idx desc,
+			name, item_name
+		limit %(start)s, %(page_len)s """.format(
+			key=searchfield,
+			fcond=get_filters_cond(doctype, filters, conditions).replace('%', '%%'),
+			mcond=get_match_cond(doctype).replace('%', '%%'),
+			description_cond = description_cond),
+			{
+				"today": nowdate(),
+				"txt": "%%%s%%" % txt,
+				"_txt": txt.replace("%", ""),
+				"start": start,
+				"page_len": page_len
+			}, as_dict=as_dict)
 
 
 '''

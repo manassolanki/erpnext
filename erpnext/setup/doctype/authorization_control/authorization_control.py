@@ -10,9 +10,8 @@ from frappe.utils.background_jobs import enqueue
 
 class AuthorizationControl(TransactionBase):
 	custom_throw = False
-	custom_item_list = []
 	custom_doc_name = None
-	custom_appr_roles = []
+	custom_auth_details = {}
 
 	def get_appr_user_role(self, det, doctype_name, total, based_on, condition, item, company, doc_obj, item_obj):
 		amt_list, appr_users, appr_roles = [], [], []
@@ -39,14 +38,14 @@ class AuthorizationControl(TransactionBase):
 				if(d[1]): appr_roles.append(d[1])
 
 			if not has_common(appr_roles, frappe.get_roles()) and not has_common(appr_users, [session['user']]):
-				frappe.msgprint(_("Not authroized since {0} ({1}) exceeds limits. Can be approved by {2}").format(_(based_on), item_obj.item_code,comma_or(appr_roles + appr_users)))
 				self.custom_throw = True
-				self.custom_appr_roles.extend(appr_roles)
-				if item_obj:
-					self.custom_item_list.append(item_obj.item_code)
+				if item_obj and (appr_roles or appr_users):
+					if appr_roles:
+						self.custom_auth_details[item_obj.item_code] = appr_roles[0]
+					elif appr_users:
+						self.custom_auth_details[item_obj.item_code] = appr_users[0]
 				if doc_obj:
 					self.custom_doc_name = doc_obj.name
-				# frappe.throw(_("Can be approved by {0}").format(comma_or(appr_roles + appr_users)))
 
 	def validate_auth_rule(self, doctype_name, total, based_on, cond, company, item = '', doc_obj=None, item_obj=None):
 		chk = 1
@@ -163,10 +162,9 @@ class AuthorizationControl(TransactionBase):
 
 		if self.custom_throw:
 			enqueue(set_custom_field, queue='default', timeout=6000, event='set_custom_field', docname=self.custom_doc_name,
-					appr_roles=self.custom_appr_roles, item_list=self.custom_item_list)
-
-			# print (self.custom_throw, self.custom_item_list, self.custom_doc_name, self.custom_appr_roles)
-			frappe.throw(_("Not authroized to submit"))
+					custom_auth_details=self.custom_auth_details)
+			frappe.throw(_("Not authroized to submit. Items {0} needs to be approved by {1}")
+				.format(", ".join(self.custom_auth_details.keys()), ", ".join(list(set(self.custom_auth_details.values())))))
 
 	def get_value_based_rule(self,doctype_name,employee,total_claimed_amount,company):
 		val_lst =[]
@@ -252,15 +250,13 @@ class AuthorizationControl(TransactionBase):
 				return app_user
 
 
-def set_custom_field(docname, appr_roles, item_list):
-	item_list = list(set(item_list))
-	appr_roles = list(set(appr_roles))
+def set_custom_field(docname, custom_auth_details):
+	appr_roles = list(set(custom_auth_details.values()))
 	doc = frappe.get_doc("Sales Order", docname)
 	doc.needs_approval = 1
 	doc.approval_by = ", ".join(appr_roles)
 	for item in doc.get("items"):
-		if item.item_code in item_list:
+		if custom_auth_details.get(item.item_code):
 			item.needs_approval = 1
+			item.custom_approver_role = custom_auth_details.get(item.item_code)
 	doc.save()
-	# frappe.db.set_value("Sales Order", docname, "needs_approval", 1)
-	# frappe.db.set_value("Sales Order", docname, "approval_by", appr_roles)
