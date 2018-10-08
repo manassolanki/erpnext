@@ -7,11 +7,12 @@ from frappe.utils import cstr, flt, has_common, comma_or
 from frappe import session, _
 from erpnext.utilities.transaction_base import TransactionBase
 from frappe.utils.background_jobs import enqueue
+from collections import defaultdict
 
 class AuthorizationControl(TransactionBase):
 	custom_throw = False
 	custom_doc_name = None
-	custom_auth_details = {}
+	custom_auth_details = defaultdict(dict)
 
 	def get_appr_user_role(self, det, doctype_name, total, based_on, condition, item, company, doc_obj, item_obj):
 		amt_list, appr_users, appr_roles = [], [], []
@@ -41,9 +42,9 @@ class AuthorizationControl(TransactionBase):
 				self.custom_throw = True
 				if item_obj and (appr_roles or appr_users):
 					if appr_roles:
-						self.custom_auth_details[item_obj.item_code] = appr_roles[0]
+						self.custom_auth_details[item_obj.item_code][appr_roles[0]] = flt(max_amount)
 					elif appr_users:
-						self.custom_auth_details[item_obj.item_code] = appr_users[0]
+						self.custom_auth_details[item_obj.item_code][appr_users[0]] = flt(max_amount)
 				if doc_obj:
 					self.custom_doc_name = doc_obj.name
 
@@ -159,12 +160,12 @@ class AuthorizationControl(TransactionBase):
 		# Check for global authorization
 		for g in final_based_on:
 			self.bifurcate_based_on_type(doctype_name, total, av_dis, g, doc_obj, 0, company)
-
 		if self.custom_throw:
 			enqueue(set_custom_field, queue='default', timeout=6000, event='set_custom_field', docname=self.custom_doc_name,
 					custom_auth_details=self.custom_auth_details)
 			frappe.throw(_("Not authroized to submit. Items {0} needs to be approved by {1}")
-				.format(", ".join(self.custom_auth_details.keys()), ", ".join(list(set(self.custom_auth_details.values())))))
+				.format(", ".join(self.custom_auth_details.keys()),
+						", ".join(list(set([str(d) for k,v in self.custom_auth_details.iteritems() for d in v.keys()])))))
 
 	def get_value_based_rule(self,doctype_name,employee,total_claimed_amount,company):
 		val_lst =[]
@@ -251,12 +252,19 @@ class AuthorizationControl(TransactionBase):
 
 
 def set_custom_field(docname, custom_auth_details):
-	appr_roles = list(set(custom_auth_details.values()))
+	appr_roles = []
 	doc = frappe.get_doc("Sales Order", docname)
-	doc.needs_approval = 1
-	doc.approval_by = ", ".join(appr_roles)
 	for item in doc.get("items"):
-		if custom_auth_details.get(item.item_code):
-			item.needs_approval = 1
-			item.custom_approver_role = custom_auth_details.get(item.item_code)
+		auth_details = custom_auth_details.get(item.item_code)
+		given_role = None
+		if auth_details:
+			for role, discount in sorted(auth_details.iteritems(), key=lambda (k,v): (v,k)):
+				if discount<item.discount_percentage:
+					item.custom_approver_role = role
+					item.needs_approval = 1
+					appr_roles.append(role)
+					
+	doc.needs_approval = 1
+	appr_roles = list(set(appr_roles))
+	doc.approval_by = ", ".join(appr_roles)
 	doc.save()

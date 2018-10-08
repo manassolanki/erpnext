@@ -50,7 +50,7 @@ def get_item_details(args):
 	else:
 		# search the given items from the seach fields
 		# doctype, txt, searchfield, start, page_len, filters, as_dict=False
-		items = custom_item_query("Item", args.txt, "name", 0, 10, {"is_sales_item": 1}, True)
+		items = custom_item_query("Item", args.txt, "name", 0, 30, {"is_sales_item": 1}, True)
 		item_dict =	{d.name: ", ".join(d.values()) for d in items}
 		item_list = item_dict.keys()
 
