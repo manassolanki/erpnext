@@ -53,7 +53,7 @@ frappe.ui.form.on(cur_frm.doctype, {
 					</button>
 				`)
 			}
-			$(grid_buttons).find(".custom-add-multiple-rows").click(function() {
+			$(grid_buttons).find(".custom-add-multiple-rows").off().click(function() {
 				console.log("clicked on the custom add button");
 				frm.events.custom_add_multiple_items(frm);
 			});
@@ -532,8 +532,19 @@ frappe.custom_mutli_add_dialog = function(frm) {
 		let customItemDetailsTemplate = '';
 		let item_details = frappe.custom_item_details;
 		if (item_details) {
+
+			// create the sorted dict
+			let sortedItems = Object.keys(item_details).map(function(key) {
+				let data = item_details[key]['item_stock_totals'];
+				return [key, data['actual_qty']-data['reserved_qty']];
+			});
+			sortedItems.sort(function(first, second) {
+				return second[1] - first[1];
+			});
+
 			customItemDetailsTemplate += custom_warehouse_template1;
-			for (let item in item_details) {
+			for (let item of sortedItems) {
+				item = item[0];
 				let actual_qty_sqm = item_details[item]["item_stock_totals"]["actual_qty"];
 				let actual_qty_box = Math.floor( actual_qty_sqm / item_details[item]["uom_box"] );
 				let actual_qty_pieces = Math.round(actual_qty_sqm / (item_details[item]["uom_box"] / item_details[item]["uom_pieces"])) % item_details[item]["uom_pieces"];

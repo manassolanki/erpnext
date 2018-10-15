@@ -115,6 +115,10 @@ class AuthorizationControl(TransactionBase):
 		if not frappe.db.count("Authorization Rule"):
 			return
 
+		self.custom_throw = False
+		self.custom_doc_name = None
+		self.custom_auth_details = defaultdict(dict)
+
 		av_dis = 0
 		if doc_obj:
 			price_list_rate, base_rate = 0, 0
