@@ -39,7 +39,7 @@ frappe.ui.form.on('Material Request', {
 				var row  = locals[cdt][cdn];
 				var filters = erpnext.queries.warehouse(frm.doc);
 				if(row.item_code){
-					$.extend(filters, {"query":"erpnext.controllers.queries.warehouse_query"});
+					$.extend(filters, {"query":"erpnext.stock.custom_stock_scripts.warehouse_query"});
 					filters["filters"].push(["Bin", "item_code", "=", row.item_code]);
 				}
 				return filters

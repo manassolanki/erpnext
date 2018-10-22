@@ -5,6 +5,7 @@ import json
 import frappe
 from frappe.defaults import get_user_default_as_list
 from frappe.desk.reportview import get_match_cond, get_filters_cond
+from erpnext.controllers.queries import get_doctype_wise_filters
 
 from collections import defaultdict
 from frappe.utils import nowdate
@@ -106,15 +107,9 @@ def get_item_details(args):
 def custom_item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=False):
 	conditions = []
 
-	description_cond = ''
-	if frappe.db.count('Item', cache=True) < 50000:
-		# scan description only if items are less than 50000
-		description_cond = 'or tabItem.description LIKE %(txt)s'
-
 	return frappe.db.sql("""select tabItem.name,
 		tabItem.item_name as item_name,
-		tabItem.item_group,
-		tabItem.description as decription
+		tabItem.item_group
 		from tabItem
 		where tabItem.docstatus < 2
 			and tabItem.has_variants=0
@@ -123,8 +118,7 @@ def custom_item_query(doctype, txt, searchfield, start, page_len, filters, as_di
 			and (tabItem.`{key}` LIKE %(txt)s
 				or tabItem.item_group LIKE %(txt)s
 				or tabItem.item_name LIKE %(txt)s
-				or tabItem.barcode LIKE %(txt)s
-				{description_cond})
+				or tabItem.barcode LIKE %(txt)s)
 			{fcond} {mcond}
 		order by
 			if(locate(%(_txt)s, name), locate(%(_txt)s, name), 99999),
@@ -134,8 +128,7 @@ def custom_item_query(doctype, txt, searchfield, start, page_len, filters, as_di
 		limit %(start)s, %(page_len)s """.format(
 			key=searchfield,
 			fcond=get_filters_cond(doctype, filters, conditions).replace('%', '%%'),
-			mcond=get_match_cond(doctype).replace('%', '%%'),
-			description_cond = description_cond),
+			mcond=get_match_cond(doctype).replace('%', '%%')),
 			{
 				"today": nowdate(),
 				"txt": "%%%s%%" % txt,
@@ -143,6 +136,44 @@ def custom_item_query(doctype, txt, searchfield, start, page_len, filters, as_di
 				"start": start,
 				"page_len": page_len
 			}, as_dict=as_dict)
+
+
+
+
+@frappe.whitelist()
+def warehouse_query(doctype, txt, searchfield, start, page_len, filters):
+	# Should be used when item code is passed in filters.
+	conditions, bin_conditions = [], []
+	filter_dict = get_doctype_wise_filters(filters)
+
+	sub_query = """ select round(`tabBin`.actual_qty, 2) from `tabBin`
+		where `tabBin`.warehouse = `tabWarehouse`.name
+		{bin_conditions} """.format(
+		bin_conditions=get_filters_cond(doctype, filter_dict.get("Bin"),
+			bin_conditions, ignore_permissions=True))
+		# CONCAT_WS(" : ", "Actual Qty", ifnull( ({sub_query}), 0) ) as actual_qty
+
+	query = """select `tabWarehouse`.name,
+		ifnull( ({sub_query}), 0) as custom_qty
+		from `tabWarehouse`
+		where
+		   `tabWarehouse`.`{key}` like '{txt}'
+			{fcond} {mcond}
+		order by
+			custom_qty desc
+		limit
+			{start}, {page_len}
+		""".format(
+			sub_query=sub_query,
+			key=frappe.db.escape(searchfield),
+			fcond=get_filters_cond(doctype, filter_dict.get("Warehouse"), conditions),
+			mcond=get_match_cond(doctype),
+			start=start,
+			page_len=page_len,
+			txt=frappe.db.escape('%{0}%'.format(txt))
+		)
+
+	return frappe.db.sql(query)
 
 
 '''

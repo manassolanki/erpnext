@@ -173,6 +173,13 @@ class SalesOrder(SellingController):
 		frappe.get_doc('Authorization Control').validate_approving_authority(self.doctype, self.company, self.base_grand_total, self)
 		self.update_project()
 		self.update_prevdoc_status('submit')
+		
+		# reset the custom field
+		self.needs_approval = 0
+		self.approval_by = ''
+		for item in self.items:
+			item.custom_approver_role = ''
+			item.needs_approval = 0
 
 	def on_cancel(self):
 		# Cannot cancel closed SO
