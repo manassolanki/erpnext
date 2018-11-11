@@ -1,0 +1,370 @@
+
+<!-- Sales Order Details -->
+<div class="row">
+	<div class="form-column col-sm-6">
+		<div class="form-group">
+			<label class="control-label" style="padding-right: 0px;">SO Date</label>
+			<div class="control-value like-disabled-input bold">{{ doc_details["Sales Order"][0].transaction_date }}</div>
+		</div>
+		<div class="form-group">
+			<label class="control-label" style="padding-right: 0px;">Location</label>
+			<div class="control-value like-disabled-input bold">{{ doc_details["Sales Order"][0].cost_center }}</div>
+		</div>
+		<div class="form-group">
+			<label class="control-label" style="padding-right: 0px;">Salesman</label>
+			<div class="control-value like-disabled-input bold">{{ doc_details["Sales Order"][0].owner }}</div>
+		</div>
+		<div class="form-group">
+			<label class="control-label" style="padding-right: 0px;">Customer</label>
+			<div class="control-value like-disabled-input bold">{{ doc_details["Sales Order"][0].customer_name }}</div>
+		</div>
+
+	</div>
+	<div class="form-column col-sm-6">
+		<div class="form-group">
+			<label class="control-label" style="padding-right: 0px;">SO Total</label>
+			<div class="control-value like-disabled-input bold">{{ doc_details["Sales Order"][0].rounded_total }}</div>
+		</div>
+		<div class="form-group">
+			<label class="control-label" style="padding-right: 0px;">No of Returns</label>
+			<div class="control-value like-disabled-input bold">
+				{% if(doc_details["Sales Invoice"]) { %}
+					{{ doc_details["Sales Invoice"].length }}
+				{% } else { %}
+					0
+				{% } %}
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="control-label" style="padding-right: 0px;">No of Material Request</label>
+			<div class="control-value like-disabled-input bold">
+				{% if(doc_details["Material Request"]) { %}
+					{{ doc_details["Material Request"].length }}
+				{% } else { %}
+					0
+				{% } %}
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="control-label" style="padding-right: 0px;">No of Stock Entries</label>
+			<div class="control-value like-disabled-input bold">
+				{% if(doc_details["Stock Entry"]) { %}
+					{{ doc_details["Stock Entry"].length }}
+				{% } else { %}
+					0
+				{% } %}
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<!-- Sales Order Item Details -->
+<h3>Sales Order Details</h3>
+<div>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th style="width: 110px">Name</th>
+				<th style="width: 140px">Status</th>
+				<th style="width: 360px">Item Name</th>
+				<th style="width: 90px">Net Rate</th>
+				<th style="width: 90px">Total Weight</th>
+				<th style="width: 90px">Qty</th>
+				<th style="width: 90px">Boxes</th>
+				<th style="width: 90px">Pieces</th>
+				<th style="width: 160px">Net Amount</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for so in sales_order_details %}
+				{% for so_item in so.items %}
+				<tr>
+					{% if (so_item.idx === 1) { %}
+					<td rowspan="{{so.items.length}}">{{ so.name }}</td>
+					<td rowspan="{{so.items.length}}">{{ so.status }}</td>
+					{% } %}
+					<td>{{ so_item.item_name }}</td>
+					<td>{{ so_item.net_rate }}</td>
+					<td>{{ so_item.total_weight }}</td>
+					<td>{{ so_item.qty }}</td>
+					<td>{{ so_item.boxes }}</td>
+					<td>{{ so_item.pieces }}</td>
+					<td>{{ so_item.net_amount }}</td>
+				</tr>
+				{% endfor %}
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+
+
+<!-- Material Request Details -->
+<h3>Material Request</h3>
+{% if (material_request_details) { %}
+<div>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th style="width: 110px">Name</th>
+				<th style="width: 140px">Status</th>
+				<th style="width: 110px">Trans. Date</th>
+				<th style="width: 360px">Item Name</th>
+				<th style="width: 90px">Qty</th>
+				<th style="width: 90px">Boxes</th>
+				<th style="width: 90px">Pieces</th>
+				<th style="width: 160px">Location</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for mr in material_request_details %}
+				{% for mr_item in mr.items %}
+				<tr>
+					{% if (mr_item.idx === 1) { %}
+					<td rowspan="{{mr.items.length}}">{{ mr.name }}</td>
+					<td rowspan="{{mr.items.length}}">{{ mr.status }}</td>
+					<td rowspan="{{mr.items.length}}">{{ mr.transaction_date }}</td>
+					{% } %}
+					<td>{{ mr_item.item_name }}</td>
+					<td>{{ mr_item.qty }}</td>
+					<td>{{ mr_item.boxes }}</td>
+					<td>{{ mr_item.pieces }}</td>
+					<td>{{ mr_item.custom_warehouse_name }}</td>
+				</tr>
+				{% endfor %}
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+{% } else { %}
+<p>No document Created </p>
+{% } %}
+
+<!-- Stock Entry Details -->
+<h3>Stock Entry</h3>
+{% if (stock_entry_details) { %}
+<div>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th style="width: 110px">Name</th>
+				<th style="width: 140px">Transfer Type</th>
+				<th style="width: 110px">Posting Date</th>
+				<th style="width: 360px">Item Name</th>
+				<th style="width: 110px">From</th>
+				<th style="width: 110px">To</th>
+				<th style="width: 110px">Material Request</th>
+				<th style="width: 90px">Qty</th>
+				<th style="width: 90px">Boxes</th>
+				<th style="width: 90px">Pieces</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for se in stock_entry_details %}
+				{% for se_item in se.items %}
+				<tr>
+					{% if (se_item.idx === 1) { %}
+					<td rowspan="{{se.items.length}}">{{ se.name }}</td>
+					<td rowspan="{{se.items.length}}">{{ se.transfer_type }}</td>
+					<td rowspan="{{se.items.length}}">{{ se.posting_date }}</td>
+					{% } %}
+					<td>{{ se_item.item_name }}</td>
+					<td>{{ se_item.s_warehouse }}</td>
+					<td>{{ se_item.t_warehouse }}</td>
+					<td>{{ se_item.material_request }}</td>
+					<td>{{ se_item.qty }}</td>
+					<td>{{ se_item.boxes }}</td>
+					<td>{{ se_item.pieces }}</td>
+				</tr>
+				{% endfor %}
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+{% } else { %}
+<p>No document Created </p>
+{% } %}
+
+
+<!-- Delivery Note Details -->
+<h3>Delivery Note</h3>
+{% if (delivery_note_details) { %}
+<div>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th style="width: 110px">Name</th>
+				<th style="width: 140px">Status</th>
+				<th style="width: 110px">Posting Date</th>
+				<th style="width: 360px">Item Name</th>
+				<th style="width: 90px">Qty</th>
+				<th style="width: 90px">Boxes</th>
+				<th style="width: 90px">Pieces</th>
+				<th style="width: 110px">Location</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for de in delivery_note_details %}
+				{% for de_item in de.items %}
+				<tr>
+					{% if (de_item.idx === 1) { %}
+					<td rowspan="{{de.items.length}}">{{ de.name }}</td>
+					<td rowspan="{{de.items.length}}">{{ de.status }}</td>
+					<td rowspan="{{de.items.length}}">{{ de.posting_date }}</td>
+					{% } %}
+					<td>{{ de_item.item_name }}</td>
+					<td>{{ de_item.qty }}</td>
+					<td>{{ de_item.boxes }}</td>
+					<td>{{ de_item.pieces }}</td>
+					<td>{{ de_item.warehouse }}</td>
+				</tr>
+				{% endfor %}
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+{% } else { %}
+<p>No document Created </p>
+{% } %}
+
+
+<!-- Sales Invoice Details -->
+<h3>Sales Invoice</h3>
+{% if (sales_invoice_details) { %}
+<div>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th style="width: 110px">Name</th>
+				<th style="width: 140px">Status</th>
+				<th style="width: 140px">Posting Date</th>
+				<th style="width: 360px">Item Name</th>
+				<th style="width: 90px">Net Rate</th>
+				<th style="width: 90px">Qty</th>
+				<th style="width: 90px">Boxes</th>
+				<th style="width: 90px">Pieces</th>
+				<th style="width: 160px">Net Amount</th>
+				<th style="width: 90px">Warehouse</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for si in sales_invoice_details %}
+				{% for si_item in si.items %}
+				<tr>
+					{% if (si_item.idx === 1) { %}
+					<td rowspan="{{si.items.length}}">{{ si.name }}</td>
+					<td rowspan="{{si.items.length}}">{{ si.status }}</td>
+					<td rowspan="{{si.items.length}}">{{ si.posting_date }}</td>
+					{% } %}
+					<td>{{ si_item.item_name }}</td>
+					<td>{{ si_item.net_rate }}</td>
+					<td>{{ si_item.qty }}</td>
+					<td>{{ si_item.boxes }}</td>
+					<td>{{ si_item.pieces }}</td>
+					<td>{{ si_item.net_amount }}</td>
+					<td>{{ si_item.warehouse }}</td>
+				</tr>
+				{% endfor %}
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+{% } else { %}
+<p>No document Created </p>
+{% } %}
+
+
+<!-- Sales Return Details -->
+<h3>Sales Return</h3>
+{% if (sales_return_details) { %}
+<div>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th style="width: 110px">Name</th>
+				<th style="width: 140px">Status</th>
+				<th style="width: 140px">Posting Date</th>
+				<th style="width: 140px">Created By</th>
+
+				<th style="width: 360px">Item Name</th>
+				<th style="width: 90px">Net Rate</th>
+				<th style="width: 90px">Qty</th>
+				<th style="width: 90px">Boxes</th>
+				<th style="width: 90px">Pieces</th>
+				<th style="width: 90px">Breakge Boxes</th>
+				<th style="width: 90px">Breakage Pieces</th>
+				<th style="width: 160px">Net Amount</th>
+				<th style="width: 90px">Warehouse</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for si in sales_return_details %}
+				{% for si_item in si.items %}
+				<tr>
+					{% if (si_item.idx === 1) { %}
+					<td rowspan="{{si.items.length}}">{{ si.name }}</td>
+					<td rowspan="{{si.items.length}}">{{ si.status }}</td>
+					<td rowspan="{{si.items.length}}">{{ si.posting_date }}</td>
+					<td rowspan="{{si.items.length}}">{{ si.owner }}</td>
+					{% } %}
+					<td>{{ si_item.item_name }}</td>
+					<td>{{ si_item.net_rate }}</td>
+					<td>{{ si_item.qty }}</td>
+					<td>{{ si_item.boxes }}</td>
+					<td>{{ si_item.pieces }}</td>
+					<td>{{ si_item.breakage_boxes }}</td>
+					<td>{{ si_item.breakage_pieces }}</td>
+					<td>{{ si_item.net_amount }}</td>
+					<td>{{ si_item.warehouse }}</td>
+				</tr>
+				{% endfor %}
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+{% } else { %}
+<p>No document Created </p>
+{% } %}
+
+
+<!-- Payment Entry Details -->
+<h3>Payment Entry</h3>
+{% if (paymeny_entry_details) { %}
+<div>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th style="width: 110px">Name</th>
+				<th style="width: 150px">Mode of Payment</th>
+				<th style="width: 150px">Payment Type</th>
+				<th style="width: 150px">Party Name</th>
+
+				<th style="width: 300px">Reference Name</th>
+				<th style="width: 110px">Total Amount</th>
+				<th style="width: 110px">Outstanding Amount</th>
+				<th style="width: 110px">Allocated Amount</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for pe in paymeny_entry_details %}
+				{% for pe_ref in pe.references %}
+				<tr>
+					{% if (pe_ref.idx === 1) { %}
+					<td rowspan="{{pe.references.length}}">{{ pe.name }}</td>
+					<td rowspan="{{pe.references.length}}">{{ pe.mode_of_payment }}</td>
+					<td rowspan="{{pe.references.length}}">{{ pe.payment_type }}</td>
+					<td rowspan="{{pe.references.length}}">{{ pe.party_name }}</td>
+					{% } %}
+					<td>{{ pe_ref.reference_name }}</td>
+					<td>{{ pe_ref.total_amount }}</td>
+					<td>{{ pe_ref.outstanding_amount }}</td>
+					<td>{{ pe_ref.allocated_amount }}</td>
+				</tr>
+				{% endfor %}
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+{% } else { %}
+<p>No document Created </p>
+{% } %}
