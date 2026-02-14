@@ -6,3 +6,4 @@ python-stdnum
 braintree
 gocardless_pro
 woocommerce
+frappe>=14.99.14 # not directly required, pinned by Snyk to avoid a vulnerability
